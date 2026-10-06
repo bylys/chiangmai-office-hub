@@ -1,0 +1,2547 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chiang Mai Office Hub | ระบบจัดการสำนักงานเชียงใหม่</title>
+  <!-- Google Fonts: Inter & Prompt (Thai) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor / Lucide Icons via Feather -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Prompt', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            thai: ['Prompt', 'sans-serif'],
+          },
+          colors: {
+            notion: {
+              bg: '#ffffff',
+              card: '#ffffff',
+              darkBg: '#191919',
+              darkSidebar: '#202020',
+              darkCard: '#252525',
+              darkBorder: '#333333',
+              border: '#e5e7eb',
+              text: '#37352f',
+              muted: '#787774',
+              hover: '#f1f1ef'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Notion-like scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(150, 150, 150, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(150, 150, 150, 0.5);
+    }
+    .notion-card:hover .hover-action {
+      opacity: 1;
+    }
+    .hover-action {
+      opacity: 0;
+      transition: opacity 0.15s ease-in-out;
+    }
+
+    /* Toast slide-in animation */
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    /* Kanban drag and drop */
+    .kanban-drop-active {
+      background: rgba(245, 158, 11, 0.08) !important;
+      border-color: rgb(245, 158, 11) !important;
+      box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.3);
+      transition: all 0.15s ease;
+    }
+    .dark .kanban-drop-active {
+      background: rgba(245, 158, 11, 0.05) !important;
+    }
+    [draggable="true"] {
+      cursor: grab;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    [draggable="true"]:active {
+      cursor: grabbing;
+    }
+
+    /* Mobile sidebar overlay */
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 40;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+      }
+      #sidebar.sidebar-open {
+        transform: translateX(0);
+      }
+      #sidebar:not(.sidebar-open) {
+        margin-left: 0 !important;
+      }
+      #sidebarOverlay {
+        display: none;
+      }
+      #sidebarOverlay.active {
+        display: block;
+      }
+    }
+
+    /* Smooth scrollbar for Kanban columns */
+    .kanban-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .kanban-scroll::-webkit-scrollbar-thumb {
+      background: rgba(150, 150, 150, 0.2);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-[#191919] text-[#37352f] dark:text-[#ebebeb] h-full flex flex-col font-sans antialiased selection:bg-amber-100 dark:selection:bg-amber-900">
+
+  <!-- Login Gate -->
+  <div id="loginGate" class="fixed inset-0 z-[9999] bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900 flex items-center justify-center">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 border border-gray-200 dark:border-neutral-700">
+      <div class="text-center mb-6">
+        <div class="text-5xl mb-3">🏯</div>
+        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">Chiang Mai Office Hub</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ระบบจัดการสำนักงานเชียงใหม่</p>
+      </div>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password / รหัสผ่าน</label>
+          <input id="loginPassword" type="password" placeholder="Enter your password"
+            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition" autofocus>
+        </div>
+        <div id="loginError" class="text-red-500 text-sm hidden">Incorrect password / รหัสผ่านไม่ถูกต้อง</div>
+        <button type="submit" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition shadow-md hover:shadow-lg">
+          Log in / เข้าสู่ระบบ
+        </button>
+      </form>
+      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">Access restricted to authorized staff only</p>
+    </div>
+  </div>
+  <script>
+  (function(){
+    const HASH = 'fb3629220041d685fb626c77aa3436fe7eaf8df507c082cae76c40b902699582';
+    if (sessionStorage.getItem('cm_auth') === 'ok') {
+      document.getElementById('loginGate').style.display = 'none';
+    }
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('loginPassword').value;
+      const encoder = new TextEncoder();
+      const data = encoder.encode(pwd);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      if (hashHex === HASH) {
+        sessionStorage.setItem('cm_auth', 'ok');
+        document.getElementById('loginGate').style.display = 'none';
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginPassword').focus();
+      }
+    });
+  })();
+  </script>
+
+  <!-- Top App Navigation Bar -->
+  <header class="h-14 border-b border-gray-200 dark:border-neutral-800 bg-white/80 dark:bg-[#1f1f1f]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4">
+    <div class="flex items-center space-x-3">
+      <button id="toggleSidebarBtn" class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-500 dark:text-neutral-400">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <div class="flex items-center space-x-2 text-sm">
+        <span class="text-xl">🏯</span>
+        <span class="font-semibold text-gray-800 dark:text-gray-100 tracking-tight">Chiang Mai Office Hub</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-medium">GMB • SEO • Ad</span>
+      </div>
+    </div>
+
+    <!-- Center Quick Search Bar -->
+    <div class="hidden md:flex items-center">
+      <div class="relative w-80">
+        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5"></i>
+        <input 
+          id="globalSearchInput" 
+          type="text" 
+          placeholder="Search Pierre, Jérémy, Alexandre, supplies, tracking... (Ctrl+K)" 
+          data-i18n-placeholder="search_placeholder"
+          class="w-full bg-gray-100 dark:bg-neutral-800/80 hover:bg-gray-200/70 dark:hover:bg-neutral-800 text-xs rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors"
+        >
+        <span class="absolute right-2.5 top-2 text-[10px] text-gray-400 bg-white dark:bg-neutral-700 px-1.5 py-0.5 rounded border border-gray-200 dark:border-neutral-600 font-mono">⌘K</span>
+      </div>
+    </div>
+
+    <!-- Right Controls: Notifications, Language, Dark Mode, New Item -->
+    <div class="flex items-center space-x-2">
+      
+      <!-- NOTIFICATIONS BELL & REMINDERS DROPDOWN -->
+      <div class="relative">
+        <button id="notifBellBtn" onclick="toggleNotifDropdown()" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition relative">
+          <i data-lucide="bell" class="w-4 h-4"></i>
+          <span id="notifBadge" class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 hidden animate-pulse"></span>
+        </button>
+
+        <!-- Notifications Dropdown Popover -->
+        <div id="notifDropdown" class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl shadow-2xl p-4 text-xs space-y-3 hidden z-50">
+          <div class="flex items-center justify-between border-b border-gray-100 dark:border-neutral-700 pb-2">
+            <div class="font-bold text-gray-900 dark:text-white flex items-center space-x-1.5">
+              <i data-lucide="bell-ring" class="w-4 h-4 text-amber-500"></i>
+              <span data-i18n="notif_center_title">Office Reminders & Alerts</span>
+            </div>
+            <button onclick="requestBrowserNotifications()" class="text-[10px] text-blue-600 hover:underline flex items-center space-x-1">
+              <i data-lucide="smartphone" class="w-3 h-3"></i>
+              <span data-i18n="enable_push">Enable Browser Push</span>
+            </button>
+          </div>
+          
+          <div id="notifListContainer" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <!-- Reminders populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- EUR/THB Exchange Rate Widget -->
+      <div id="eurThbWidget" class="hidden items-center space-x-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-lg text-[11px] font-mono">
+        <span>💱</span>
+        <span id="eurThbRate">--</span>
+      </div>
+
+      <!-- Language Switcher Toggle -->
+      <div class="flex items-center bg-gray-100 dark:bg-neutral-800 p-0.5 rounded-lg border border-gray-200 dark:border-neutral-700 text-xs">
+        <button id="langENBtn" class="px-2.5 py-1 rounded-md font-medium transition-all flex items-center space-x-1.5 bg-white dark:bg-neutral-700 shadow-sm text-gray-900 dark:text-white">
+          <span>🇬🇧</span>
+          <span>EN</span>
+        </button>
+        <button id="langTHBtn" class="px-2.5 py-1 rounded-md font-medium transition-all flex items-center space-x-1.5 text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white">
+          <span>🇹🇭</span>
+          <span>ไทย</span>
+        </button>
+      </div>
+
+      <!-- Dark Mode Toggle -->
+      <button id="darkModeToggle" title="Toggle Dark/Light Mode" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition">
+        <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+        <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+      </button>
+
+      <!-- New Item Dropdown Button -->
+      <div class="relative group">
+        <button id="quickNewTaskBtn" class="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span data-i18n="new_task">New Item</span>
+          <i data-lucide="chevron-down" class="w-3 h-3 ml-0.5"></i>
+        </button>
+        <!-- Dropdown menu -->
+        <div class="absolute right-0 mt-1 w-52 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-xl py-1 text-xs hidden group-hover:block z-40">
+          <button onclick="openTaskModal()" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center space-x-2">
+            <span>📋</span>
+            <span data-i18n="menu_new_task">New Task</span>
+          </button>
+          <button onclick="openSupplyModal()" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center space-x-2">
+            <span>📦</span>
+            <span data-i18n="menu_new_supply">New Supply Order</span>
+          </button>
+          <button onclick="openAppointmentModal()" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center space-x-2">
+            <span>📅</span>
+            <span data-i18n="menu_new_appointment">New Appointment / RDV</span>
+          </button>
+          <button onclick="openRenovationModal()" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center space-x-2">
+            <span>🔨</span>
+            <span data-i18n="menu_new_renovation">New Renovation Project</span>
+          </button>
+          <button onclick="openHandworkerModal()" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center space-x-2 border-t border-gray-100 dark:border-neutral-700">
+            <span>📞</span>
+            <span data-i18n="menu_new_handworker">Add Contact (AIS/True/Agent)</span>
+          </button>
+          <button onclick="openAssetModal()" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center space-x-2">
+            <span>💻</span>
+            <span data-i18n="menu_new_asset">New IT Asset / Equipment</span>
+          </button>
+          <button onclick="openBillModal()" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center space-x-2">
+            <span>⚡</span>
+            <span data-i18n="menu_new_bill">New Recurring Office Bill</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Layout -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- Notion-Style Sidebar -->
+    <aside id="sidebar" class="w-64 border-r border-gray-200 dark:border-neutral-800 bg-[#fbfbfa] dark:bg-[#1a1a1a] flex flex-col justify-between transition-all duration-200 select-none z-20 flex-shrink-0">
+      <div class="p-3 space-y-4 overflow-y-auto">
+
+        <!-- Workspace Info -->
+        <div class="p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-neutral-800/60 cursor-pointer flex items-center justify-between transition">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-7 h-7 rounded-md bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+              CM
+            </div>
+            <div>
+              <div class="text-xs font-semibold leading-tight text-gray-900 dark:text-gray-100" data-i18n="workspace_title">Chiang Mai Office Hub</div>
+              <div class="text-[10px] text-gray-500 dark:text-neutral-400" data-i18n="workspace_role">Kibo (Office Manager)</div>
+            </div>
+          </div>
+          <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-gray-400"></i>
+        </div>
+
+        <!-- Quick Views Navigation -->
+        <div>
+          <div class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 px-2 py-1 tracking-wider uppercase" data-i18n="views_section">Views</div>
+          <nav class="space-y-1 text-xs">
+
+            <!-- Group: Main -->
+            <div class="mb-2">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90')"
+                class="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-neutral-300">
+                <span data-i18n="group_main">Main</span>
+                <i data-lucide="chevron-right" class="w-3 h-3 chevron rotate-90 transition-transform"></i>
+              </button>
+              <div class="space-y-0.5">
+                <!-- Kanban -->
+                <button data-view="kanban" class="view-nav-btn active w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="trello" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+                    <span data-i18n="view_kanban">Board / Kanban</span>
+                  </div>
+                  <span id="badgeKanbanCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-200/60 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-mono">0</span>
+                </button>
+
+                <!-- Table -->
+                <button data-view="table" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="table" class="w-4 h-4 text-gray-400"></i>
+                    <span data-i18n="view_table">Detailed Table</span>
+                  </div>
+                  <span id="badgeTableCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-300 font-mono">0</span>
+                </button>
+
+                <!-- Supplies & Orders Tracking -->
+                <button data-view="supplies" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="shopping-bag" class="w-4 h-4 text-gray-400"></i>
+                    <span data-i18n="view_supplies">Supplies & Order Tracking</span>
+                  </div>
+                  <div class="flex items-center space-x-1">
+                    <span id="badgeTrackOrdersCount" class="hidden text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500 text-white font-mono animate-pulse">🚚 0</span>
+                    <span id="badgeSuppliesCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-mono">0</span>
+                  </div>
+                </button>
+
+                <!-- Appointments & Calendar Sync -->
+                <button data-view="calendar" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="calendar" class="w-4 h-4 text-purple-600 dark:text-purple-400"></i>
+                    <span data-i18n="view_calendar">Calendar & RDV Sync</span>
+                  </div>
+                  <span id="badgeApptCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-mono">0</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Group: Finance & Bills -->
+            <div class="mb-2">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90')"
+                class="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-neutral-300">
+                <span data-i18n="group_finance">Finance & Bills</span>
+                <i data-lucide="chevron-right" class="w-3 h-3 chevron rotate-90 transition-transform"></i>
+              </button>
+              <div class="space-y-0.5">
+                <!-- Team Budget Breakdown -->
+                <button data-view="budget" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="pie-chart" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+                    <span data-i18n="view_budget">Budget by Team</span>
+                  </div>
+                  <span id="badgeBudgetTotal" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono font-bold">฿0</span>
+                </button>
+
+                <!-- Recurring Overhead Bills -->
+                <button data-view="recurring_bills" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="zap" class="w-4 h-4 text-rose-600 dark:text-rose-400"></i>
+                    <span data-i18n="view_recurring_bills">Monthly Office Bills</span>
+                  </div>
+                  <span id="badgeBillsDue" class="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 font-mono">0</span>
+                </button>
+
+                <!-- IT Hardware & Equipment Registry -->
+                <button data-view="it_inventory" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="laptop" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i>
+                    <span data-i18n="view_it_inventory">IT Hardware & Assets</span>
+                  </div>
+                  <span id="badgeItCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-mono">0</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Group: Reference & Tools -->
+            <div class="mb-2">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90')"
+                class="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-neutral-300">
+                <span data-i18n="group_reference">Reference & Tools</span>
+                <i data-lucide="chevron-right" class="w-3 h-3 chevron rotate-90 transition-transform"></i>
+              </button>
+              <div class="space-y-0.5">
+                <!-- Handworkers / Key Contacts (AIS, True, Agent) -->
+                <button data-view="handworkers" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="phone-call" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+                    <span data-i18n="view_handworkers">AIS • True • Agent</span>
+                  </div>
+                  <span id="badgeHandworkersCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono">3</span>
+                </button>
+
+                <!-- Renovations & Facilities -->
+                <button data-view="renovations" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="hammer" class="w-4 h-4 text-gray-400"></i>
+                    <span data-i18n="view_renovations">Office Renovations</span>
+                  </div>
+                  <span id="badgeRenovationsCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-mono">0</span>
+                </button>
+
+                <!-- Wiki -->
+                <button data-view="wiki" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="book-open" class="w-4 h-4 text-gray-400"></i>
+                    <span data-i18n="view_wiki">Office Wiki & Emergency</span>
+                  </div>
+                </button>
+
+                <!-- Kibo's Guide & Tutorial -->
+                <button data-view="tutorial" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-semibold text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-300/80 dark:border-amber-700/60 transition group mt-1">
+                  <div class="flex items-center space-x-2.5">
+                    <i data-lucide="graduation-cap" class="w-4 h-4 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform"></i>
+                    <span data-i18n="view_tutorial">🎓 Kibo's Guide / คู่มือ Kibo</span>
+                  </div>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-500 text-white uppercase tracking-wider shadow-xs">Guide</span>
+                </button>
+              </div>
+            </div>
+
+          </nav>
+        </div>
+
+        <!-- TEAMS & BENEFICIARIES (Team GMB, Team SEO, Pierre, Team Ad) -->
+        <div>
+          <div class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 px-2 py-1 tracking-wider uppercase" data-i18n="teams_section">Teams & Beneficiaries</div>
+          <div class="space-y-0.5 text-xs" id="teamFilterList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- TEAM MEMBERS (Pierre, Jérémy, Matthieu, Marvin, Alexandre, Mailys, Kibo) -->
+        <div>
+          <div class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 px-2 py-1 tracking-wider uppercase" data-i18n="members_section">Team Members</div>
+          <div class="space-y-0.5 text-xs" id="memberFilterList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Office Rooms / Pieces -->
+        <div>
+          <div class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 px-2 py-1 tracking-wider uppercase" data-i18n="rooms_section">Office Rooms / Pieces</div>
+          <div class="space-y-0.5 text-xs" id="roomFilterList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar Footer: Stats & Data Management -->
+      <div class="p-3 border-t border-gray-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 text-xs space-y-2">
+        <div class="flex items-center justify-between text-gray-500 dark:text-neutral-400 text-[11px]">
+          <span data-i18n="local_data_saved">Saved in browser</span>
+          <span class="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+            <span data-i18n="live">Active</span>
+          </span>
+        </div>
+        <div class="flex items-center space-x-1.5 pt-1">
+          <button id="exportDataBtn" class="flex-1 px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-gray-700 dark:text-neutral-300 text-[11px] flex items-center justify-center space-x-1 transition">
+            <i data-lucide="download" class="w-3 h-3"></i>
+            <span data-i18n="export">Export</span>
+          </button>
+          <label class="flex-1 px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-gray-700 dark:text-neutral-300 text-[11px] flex items-center justify-center space-x-1 cursor-pointer transition">
+            <i data-lucide="upload" class="w-3 h-3"></i>
+            <span data-i18n="import">Import</span>
+            <input type="file" id="importFileInput" accept=".json" class="hidden">
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden" onclick="closeMobileSidebar()"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#191919]">
+
+      <!-- Notion Page Header Banner -->
+      <div class="relative h-32 md:h-36 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 flex-shrink-0 overflow-hidden group">
+        <div class="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay" style="background-image: url('https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600&q=80');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        
+        <div class="absolute bottom-4 left-6 right-6 flex items-end justify-between text-white">
+          <div>
+            <div class="flex items-center space-x-2 text-xs font-medium text-amber-200 mb-1">
+              <span>📍 Chiang Mai Hub</span>
+              <span>•</span>
+              <span id="currentWeatherAirBadge" class="bg-black/30 backdrop-blur px-2 py-0.5 rounded-full text-[11px] border border-white/20">
+                🍃 Air: Good (AQI 32) • 29°C
+              </span>
+            </div>
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center space-x-2">
+              <span id="pageHeaderTitle" data-i18n="page_title">Chiang Mai Office Hub</span>
+              <span class="text-xs bg-white/20 px-2 py-0.5 rounded font-normal" data-i18n="team_edition">Team Edition</span>
+            </h1>
+            <p id="pageHeaderSubtitle" class="text-xs text-amber-100/80 mt-0.5" data-i18n="page_subtitle">Tasks, supplies, team equipment, calendar appointments & order tracking</p>
+          </div>
+          <div class="hidden sm:flex items-center space-x-2">
+            <button onclick="openKiboTutorialModal()" class="text-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-3 py-1.5 rounded-lg shadow-md flex items-center space-x-1.5 transition border border-white/20 hover:scale-105 active:scale-95">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span data-i18n="btn_kibo_tutorial">🎓 Kibo's Guide / คู่มือ Kibo</span>
+            </button>
+            <button onclick="resetDefaultTasks()" class="text-xs bg-black/40 hover:bg-black/60 backdrop-blur px-2.5 py-1.5 rounded-lg border border-white/20 flex items-center space-x-1.5 transition text-white">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span data-i18n="load_demo">Restore Defaults</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action & Filter Bar -->
+      <div id="filterBarContainer" class="border-b border-gray-200 dark:border-neutral-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 bg-[#ffffff] dark:bg-[#191919] z-10 flex-shrink-0">
+        <div class="flex items-center space-x-2 text-xs">
+          <!-- Filter by Beneficiary / Team -->
+          <div class="relative">
+            <select id="teamFilterSelect" onchange="renderCurrentView()" class="bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
+              <option value="ALL" data-i18n="filter_all_teams">All Teams / Beneficiaries</option>
+              <option value="Team GMB">Team GMB</option>
+              <option value="Team SEO">Team SEO</option>
+              <option value="Team Ad">Team Ad</option>
+              <option value="Pierre">Pierre</option>
+              <option value="Office Common">Office Common</option>
+            </select>
+          </div>
+
+          <!-- Filter by Member -->
+          <div class="relative">
+            <select id="memberFilterSelect" onchange="renderCurrentView()" class="bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
+              <option value="ALL" data-i18n="filter_all_members">All Members</option>
+              <option value="Pierre">Pierre</option>
+              <option value="Jérémy">Jérémy</option>
+              <option value="Matthieu">Matthieu</option>
+              <option value="Marvin">Marvin</option>
+              <option value="Alexandre">Alexandre</option>
+              <option value="Mailys">Mailys</option>
+              <option value="Kibo">Kibo (Office Manager)</option>
+            </select>
+          </div>
+
+          <!-- Filter by Priority -->
+          <div class="relative">
+            <select id="priorityFilterSelect" class="bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
+              <option value="ALL" data-i18n="filter_all_priorities">All Priorities</option>
+              <option value="urgent" data-i18n="prio_urgent">🔥 Urgent / ด่วนที่สุด</option>
+              <option value="high" data-i18n="prio_high">🔴 High / สูง</option>
+              <option value="medium" data-i18n="prio_medium">🟡 Medium / ปานกลาง</option>
+              <option value="low" data-i18n="prio_low">🟢 Low / ทั่วไป</option>
+            </select>
+          </div>
+
+          <!-- Reset Filter Button -->
+          <button id="resetFiltersBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-1 py-1 rounded hidden" title="Clear Filters">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Summary Counters -->
+        <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-neutral-400">
+          <div class="flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span data-i18n="stat_open">Open:</span>
+            <span id="statOpenCount" class="font-semibold text-gray-800 dark:text-gray-200">0</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span data-i18n="stat_inprogress">In Progress:</span>
+            <span id="statInProgressCount" class="font-semibold text-gray-800 dark:text-gray-200">0</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span data-i18n="stat_done">Done:</span>
+            <span id="statDoneCount" class="font-semibold text-gray-800 dark:text-gray-200">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Views Container (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-6" id="viewContainer">
+
+        <!-- VIEW 1: KANBAN BOARD -->
+        <div id="viewKanban" class="h-full flex space-x-4 overflow-x-auto pb-4"></div>
+
+        <!-- VIEW 2: TABLE VIEW -->
+        <div id="viewTable" class="hidden">
+          <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-gray-50 dark:bg-neutral-800/80 text-gray-500 dark:text-neutral-400 border-b border-gray-200 dark:border-neutral-700 select-none">
+                  <tr>
+                    <th class="py-3 px-4 font-semibold w-12 text-center">#</th>
+                    <th class="py-3 px-4 font-semibold" data-i18n="col_task">Task / Item</th>
+                    <th class="py-3 px-3 font-semibold" data-i18n="col_team">Team / Member</th>
+                    <th class="py-3 px-3 font-semibold" data-i18n="col_contact">Contact (AIS/True/Agent)</th>
+                    <th class="py-3 px-3 font-semibold" data-i18n="col_status">Status</th>
+                    <th class="py-3 px-3 font-semibold" data-i18n="col_priority">Priority</th>
+                    <th class="py-3 px-3 font-semibold" data-i18n="col_due">Due Date</th>
+                    <th class="py-3 px-3 font-semibold" data-i18n="col_budget">Budget (฿)</th>
+                    <th class="py-3 px-4 font-semibold text-right" data-i18n="col_actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-gray-100 dark:divide-neutral-800"></tbody>
+              </table>
+            </div>
+            <div class="p-3 bg-gray-50/50 dark:bg-neutral-800/40 border-t border-gray-200 dark:border-neutral-800 flex items-center justify-between text-xs text-gray-500">
+              <span id="tableSummaryText">Showing tasks</span>
+              <button onclick="openTaskModal()" class="text-amber-600 hover:text-amber-700 font-medium flex items-center space-x-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span data-i18n="add_row">Add new entry</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: SUPPLIES & ORDER TRACKING WITH PRICING, ROOMS & TEAMS -->
+        <div id="viewSupplies" class="hidden space-y-5">
+          
+          <!-- ACTIVE ORDER TRACKING BANNER -->
+          <div id="activeTrackingSection" class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-900 rounded-xl p-4 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-xl">🚚</span>
+                <h3 class="font-bold text-xs text-blue-900 dark:text-blue-200" data-i18n="tracking_banner_title">Active Shipments & Order Tracking (พัสดุและคำสั่งซื้อที่อยู่ระหว่างจัดส่ง)</h3>
+              </div>
+              <span id="activeTrackingCountBadge" class="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-mono">0 active</span>
+            </div>
+            <div id="activeTrackingCardsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
+
+          <!-- Supplies Filter Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-gray-50 dark:bg-neutral-800/60 p-3.5 rounded-xl border border-gray-200/70 dark:border-neutral-700">
+            <div class="flex items-center flex-wrap gap-2 text-xs">
+              <!-- Filter by Room -->
+              <select id="supplyRoomFilterSelect" onchange="renderSuppliesCatalog()" class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs">
+                <option value="ALL" data-i18n="room_all">All Rooms / Zones</option>
+                <option value="Exterieur">🌿 Exterieur</option>
+                <option value="Private office">💼 Private office</option>
+                <option value="Common Office">🖥️ Common Office</option>
+                <option value="Kitchen">☕ Kitchen</option>
+                <option value="Bathroom">🚿 Bathroom</option>
+                <option value="Rooftop">🌇 Rooftop</option>
+                <option value="Common Space/Playground">🎯 Common Space/Playground</option>
+              </select>
+
+              <!-- Filter by Beneficiary -->
+              <select id="supplyBeneficiaryFilterSelect" onchange="renderSuppliesCatalog()" class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs">
+                <option value="ALL" data-i18n="beneficiary_all">All Teams / Beneficiaries</option>
+                <option value="Team GMB">Team GMB</option>
+                <option value="Team SEO">Team SEO</option>
+                <option value="Team Ad">Team Ad</option>
+                <option value="Pierre">Pierre</option>
+                <option value="Office Common">Office Common</option>
+              </select>
+
+              <!-- Filter by Stock Status -->
+              <select id="supplyStatusFilterSelect" onchange="renderSuppliesCatalog()" class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs">
+                <option value="ALL" data-i18n="supply_status_all">All Stock Statuses</option>
+                <option value="ordered">🚚 Ordered / Tracking (สั่งแล้ว)</option>
+                <option value="need_order">🚨 Need to Order (ต้องสั่งด่วน)</option>
+                <option value="low">⚠️ Low Stock (ใกล้หมด)</option>
+                <option value="in_stock">✅ In Stock (มีสต็อกพอ)</option>
+              </select>
+            </div>
+
+            <button onclick="openSupplyModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span data-i18n="add_new_supply">+ Add Supply & Order</span>
+            </button>
+          </div>
+
+          <!-- Supplies Cards Gallery Grid -->
+          <div id="suppliesGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+        </div>
+
+        <!-- VIEW: APPOINTMENTS & CALENDAR (Google & Apple Calendar Sync) -->
+        <div id="viewCalendar" class="hidden space-y-6">
+          
+          <!-- Calendar Header & Sync Actions -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-purple-50/70 dark:bg-purple-950/40 p-4 rounded-xl border border-purple-200 dark:border-purple-900/60">
+            <div>
+              <h2 class="text-sm font-bold text-purple-950 dark:text-purple-200 flex items-center space-x-2">
+                <i data-lucide="calendar" class="w-4 h-4 text-purple-600"></i>
+                <span data-i18n="appt_view_title">Appointments & Office Schedule</span>
+              </h2>
+              <p class="text-[11px] text-purple-800/80 dark:text-purple-300/80 mt-0.5" data-i18n="appt_view_subtitle">
+                Schedule RDVs with AIS, True, Landlord Agent, team syncs, and sync with Google or Apple Calendar
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button onclick="openAppointmentModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span data-i18n="add_new_appt">+ New Appointment</span>
+              </button>
+              <button onclick="exportAllAppointmentsIcs()" class="bg-white dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition" title="Export all to Apple Calendar / Outlook">
+                <i data-lucide="calendar-arrow-down" class="w-3.5 h-3.5"></i>
+                <span data-i18n="calendar_download_ics">Download .ICS (Apple)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Appointments List -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 space-y-3">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400" data-i18n="upcoming_appts">Upcoming Appointments / RDV</h3>
+              <div id="appointmentsList" class="space-y-3">
+                <!-- Injected by JS -->
+              </div>
+            </div>
+
+            <!-- Right: Office Manager Recurring Cadence -->
+            <div class="bg-amber-50/60 dark:bg-neutral-800/60 border border-amber-200/60 dark:border-neutral-700 rounded-xl p-4 text-xs space-y-3">
+              <h3 class="font-semibold text-amber-900 dark:text-amber-300 flex items-center space-x-2">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                <span data-i18n="routine_title">Chiang Mai Office Manager Cadence</span>
+              </h3>
+              <ul class="space-y-2 text-gray-700 dark:text-neutral-300">
+                <li class="flex items-start space-x-2">
+                  <span class="font-bold text-amber-600">Day 1-5:</span>
+                  <span data-i18n="routine_1">Pay PEA electricity & MWA water bills (via PEA Smart Plus app or Krungthai/Kasikorn).</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="font-bold text-amber-600">Weekly:</span>
+                  <span data-i18n="routine_2">Restock Singha/Glacier drinking water bottles & Doi Chang whole coffee beans.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="font-bold text-amber-600">Monthly:</span>
+                  <span data-i18n="routine_3">Check AC filter cleanliness. Inspect fire extinguishers & emergency lighting.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="font-bold text-amber-600">Quarterly:</span>
+                  <span data-i18n="routine_4">Deep AC cleaning wash by certified tech. Check 90-day expat visa status.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="font-bold text-amber-600">Dec - April:</span>
+                  <span data-i18n="routine_5">High PM2.5 Season! Keep HEPA filters active 24/7, monitor indoor AQI, stock N95 masks.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- VIEW: HANDWORKERS (AIS, True, Agent) -->
+        <div id="viewHandworkers" class="hidden space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-emerald-50/60 dark:bg-emerald-950/30 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60">
+            <div>
+              <h2 class="text-sm font-bold text-emerald-900 dark:text-emerald-200 flex items-center space-x-2">
+                <i data-lucide="phone-call" class="w-4 h-4 text-emerald-600"></i>
+                <span data-i18n="key_contacts_title">Essential Contacts (AIS, True, Agent)</span>
+              </h2>
+              <p class="text-[11px] text-emerald-700 dark:text-emerald-300/80 mt-0.5" data-i18n="key_contacts_subtitle">
+                Quick 1-click phone dial & Line ID for AIS Fibre, True Business, and Landlord/Visa Agent
+              </p>
+            </div>
+
+            <button onclick="openHandworkerModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span data-i18n="add_handworker">+ Add Contact</span>
+            </button>
+          </div>
+
+          <!-- Handworkers Cards Grid -->
+          <div id="handworkersGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- VIEW: RENOVATIONS & REPAIRS -->
+        <div id="viewRenovations" class="hidden space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-gray-50 dark:bg-neutral-800/60 p-3.5 rounded-xl border border-gray-200/70 dark:border-neutral-700">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center space-x-2">
+                <i data-lucide="hammer" class="w-4 h-4 text-amber-600"></i>
+                <span data-i18n="renovations_title">Office Renovations & Facilities Projects</span>
+              </h2>
+              <p class="text-[11px] text-gray-500 dark:text-neutral-400 mt-0.5" data-i18n="renovations_subtitle">
+                Track site renovations, before/after photos, contractors, material sources & quotes
+              </p>
+            </div>
+
+            <button onclick="openRenovationModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span data-i18n="add_new_renovation">+ New Renovation Project</span>
+            </button>
+          </div>
+
+          <div id="renovationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </div>
+
+        <!-- VIEW: WIKI & EMERGENCY DIRECTORY -->
+        <div id="viewWiki" class="hidden space-y-6 max-w-4xl">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Emergency & Essential Chiang Mai Contacts -->
+            <div class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl p-5 space-y-3 shadow-sm">
+              <div class="flex items-center space-x-2 text-rose-600 dark:text-rose-400 font-semibold text-sm">
+                <i data-lucide="phone-call" class="w-4 h-4"></i>
+                <span data-i18n="wiki_emergency_title">Chiang Mai Emergency Contacts</span>
+              </div>
+              <div class="space-y-2 text-xs divide-y divide-gray-100 dark:divide-neutral-700">
+                <div class="pt-2 flex justify-between items-center">
+                  <div>
+                    <div class="font-medium text-gray-900 dark:text-white" data-i18n="contact_tourist_police">Tourist Police (English/Thai)</div>
+                    <div class="text-gray-400 text-[11px]" data-i18n="wiki_expat_emergency">Emergency for expat staff</div>
+                  </div>
+                  <a href="tel:1155" class="bg-rose-50 dark:bg-rose-950/60 text-rose-600 px-2.5 py-1 rounded font-mono font-bold">1155</a>
+                </div>
+                <div class="pt-2 flex justify-between items-center">
+                  <div>
+                    <div class="font-medium text-gray-900 dark:text-white" data-i18n="contact_pea">PEA Electricity Faults (การไฟฟ้า)</div>
+                    <div class="text-gray-400 text-[11px]" data-i18n="wiki_pea_center">Chiang Mai PEA Call Center</div>
+                  </div>
+                  <a href="tel:1129" class="bg-amber-50 dark:bg-amber-950/60 text-amber-700 px-2.5 py-1 rounded font-mono font-bold">1129</a>
+                </div>
+                <div class="pt-2 flex justify-between items-center">
+                  <div>
+                    <div class="font-medium text-gray-900 dark:text-white" data-i18n="contact_hospital">Chiang Mai Ram Hospital</div>
+                    <div class="text-gray-400 text-[11px]" data-i18n="wiki_accident_24h">Accidents & 24h Emergency</div>
+                  </div>
+                  <a href="tel:053920300" class="bg-blue-50 dark:bg-blue-950/60 text-blue-600 px-2.5 py-1 rounded font-mono font-bold">053-920-300</a>
+                </div>
+                <div class="pt-2 flex justify-between items-center">
+                  <div>
+                    <div class="font-medium text-gray-900 dark:text-white" data-i18n="contact_immigration">Chiang Mai Immigration Office</div>
+                    <div class="text-gray-400 text-[11px]" data-i18n="wiki_immigration_branch">Promenada / Airport Branch</div>
+                  </div>
+                  <a href="tel:053201591" class="bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-200 px-2.5 py-1 rounded font-mono">053-201-591</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Standard Operating Procedures (SOP) -->
+            <div class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl p-5 space-y-3 shadow-sm">
+              <div class="flex items-center space-x-2 text-amber-600 dark:text-amber-400 font-semibold text-sm">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span data-i18n="sop_title">Standard Operating Procedures (SOP)</span>
+              </div>
+              <div class="space-y-2 text-xs">
+                <div class="p-2.5 rounded-lg bg-gray-50 dark:bg-neutral-900/60 border border-gray-100 dark:border-neutral-700">
+                  <div class="font-semibold text-gray-800 dark:text-gray-200 flex items-center space-x-1.5">
+                    <span>📄</span>
+                    <span data-i18n="sop_tm30_title">TM30 Filing Process (แจ้งที่พักคนต่างชาติ)</span>
+                  </div>
+                  <p class="text-gray-600 dark:text-neutral-400 mt-1" data-i18n="sop_tm30_desc">
+                    Must be registered within 24 hours of any foreign staff arriving at company housing. File via Section 38 portal.
+                  </p>
+                </div>
+                <div class="p-2.5 rounded-lg bg-gray-50 dark:bg-neutral-900/60 border border-gray-100 dark:border-neutral-700">
+                  <div class="font-semibold text-gray-800 dark:text-gray-200 flex items-center space-x-1.5">
+                    <span>❄️</span>
+                    <span data-i18n="sop_ac_title">Aircon Maintenance Rules</span>
+                  </div>
+                  <p class="text-gray-600 dark:text-neutral-400 mt-1" data-i18n="sop_ac_desc">
+                    Set thermostat to 25°C. Clean dust mesh every 2 weeks. Deep water coil wash every 3 months.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: IT HARDWARE & ASSETS REGISTRY -->
+        <div id="viewItInventory" class="hidden space-y-6">
+          
+          <!-- IT Header & Action -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-blue-50/70 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-200 dark:border-blue-900/60">
+            <div>
+              <h2 class="text-sm font-bold text-blue-950 dark:text-blue-200 flex items-center space-x-2">
+                <i data-lucide="laptop" class="w-4 h-4 text-blue-600"></i>
+                <span data-i18n="it_view_title">IT Hardware & Equipment Registry</span>
+              </h2>
+              <p class="text-[11px] text-blue-800/80 dark:text-blue-300/80 mt-0.5" data-i18n="it_view_subtitle">
+                Track MacBooks, 4K monitors, mechanical keyboards, serial numbers & AppleCare warranties by person
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button onclick="openAssetModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span data-i18n="add_new_asset">+ Add IT Equipment</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- IT KPI Metrics Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                💻
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="it_total_devices">Total Devices</div>
+                <div id="itTotalDevicesCount" class="text-base font-bold font-mono text-gray-900 dark:text-white">0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                ฿
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="it_total_value">Total Asset Value</div>
+                <div id="itTotalValueDisplay" class="text-base font-bold font-mono text-gray-900 dark:text-white">฿0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                👤
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="it_assigned">Assigned to Team</div>
+                <div id="itAssignedCount" class="text-base font-bold font-mono text-gray-900 dark:text-white">0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                🛡️
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="it_warranties">Warranties Active</div>
+                <div id="itWarrantiesActiveCount" class="text-base font-bold font-mono text-gray-900 dark:text-white">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- IT Filters Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-gray-50 dark:bg-neutral-800/60 p-3 rounded-xl border border-gray-200/70 dark:border-neutral-700">
+            <div class="flex items-center flex-wrap gap-2 text-xs">
+              <!-- Filter by Person -->
+              <select id="itMemberFilterSelect" onchange="renderItInventory()" class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs">
+                <option value="ALL" data-i18n="it_filter_members">All Team Members</option>
+                <option value="Marvin">Marvin</option>
+                <option value="Jérémy">Jérémy</option>
+                <option value="Matthieu">Matthieu</option>
+                <option value="Pierre">Pierre</option>
+                <option value="Alexandre">Alexandre</option>
+                <option value="Mailys">Mailys</option>
+                <option value="Kibo">Kibo (Office Manager)</option>
+                <option value="Unassigned">Office Stock / Pool</option>
+              </select>
+
+              <!-- Filter by Category -->
+              <select id="itCategoryFilterSelect" onchange="renderItInventory()" class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs">
+                <option value="ALL" data-i18n="it_filter_categories">All Device Categories</option>
+                <option value="Laptop">💻 Laptops (MacBook)</option>
+                <option value="Monitor">🖥️ Monitors & Screens (4K/5K)</option>
+                <option value="Keyboard">⌨️ Keyboards & Mice</option>
+                <option value="Audio">🎧 Audio, Headsets & Mics</option>
+                <option value="Network">🔌 Docks & Network Hubs</option>
+              </select>
+
+              <!-- Filter by Room -->
+              <select id="itRoomFilterSelect" onchange="renderItInventory()" class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs">
+                <option value="ALL" data-i18n="it_filter_rooms">All Rooms</option>
+                <option value="Common Office">🖥️ Common Office</option>
+                <option value="Private office">💼 Private office</option>
+                <option value="Common Space/Playground">🎯 Common Space/Playground</option>
+                <option value="Kitchen">☕ Kitchen</option>
+                <option value="Rooftop">🌇 Rooftop</option>
+                <option value="Exterieur">🌿 Exterieur</option>
+                <option value="Bathroom">🚿 Bathroom</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Grouped by Person Hardware Cards -->
+          <div id="itInventoryContainer" class="space-y-6"></div>
+        </div>
+
+        <!-- VIEW: BUDGET DASHBOARD & SPEND BREAKDOWN -->
+        <div id="viewBudget" class="hidden space-y-6">
+          
+          <!-- Budget Header -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-amber-50/70 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60">
+            <div>
+              <h2 class="text-sm font-bold text-amber-950 dark:text-amber-200 flex items-center space-x-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-amber-600"></i>
+                <span data-i18n="budget_view_title">Monthly Team Budget & Spend Breakdown</span>
+              </h2>
+              <p class="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5" data-i18n="budget_view_subtitle">
+                Detailed allocation of office expenditures in Thai Baht (฿) across Team GMB, Team SEO, Team Ad, Pierre, and Office Common
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button onclick="window.print()" class="bg-white dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span data-i18n="budget_print">Print Report</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Budget KPI Metrics -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                ฿
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="budget_total_spend">Total Office Spend</div>
+                <div id="budgetTotalGlobalDisplay" class="text-base font-bold font-mono text-gray-900 dark:text-white">฿0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
+                📦
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="budget_supplies_orders">Supplies & Orders</div>
+                <div id="budgetSuppliesSpendDisplay" class="text-base font-bold font-mono text-gray-900 dark:text-white">฿0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+                ⚡
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="budget_fixed_bills">Monthly Fixed Bills</div>
+                <div id="budgetRecurringSpendDisplay" class="text-base font-bold font-mono text-gray-900 dark:text-white">฿0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                🏆
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="budget_top_team">Top Allocated Team</div>
+                <div id="budgetTopTeamDisplay" class="text-xs font-bold text-gray-900 dark:text-white truncate">Office Common</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual Distribution Breakdown Bar -->
+          <div class="bg-white dark:bg-neutral-800 p-5 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-xs text-gray-900 dark:text-white uppercase tracking-wider flex items-center space-x-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-amber-500"></i>
+                <span data-i18n="budget_distribution">Team Expenditure Distribution (%)</span>
+              </h3>
+              <span class="text-[11px] text-gray-500" data-i18n="budget_currency">Currency: THB (฿)</span>
+            </div>
+
+            <!-- Proportional Multi-Color Progress Bar -->
+            <div id="budgetDistributionBar" class="w-full h-5 rounded-full overflow-hidden flex bg-gray-100 dark:bg-neutral-700 shadow-inner"></div>
+
+            <!-- Legend Grid -->
+            <div id="budgetLegendGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2 text-xs"></div>
+          </div>
+
+          <!-- Cards Breakdown by Team -->
+          <div id="budgetTeamsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </div>
+
+        <!-- VIEW: MONTHLY RECURRING BILLS & OVERHEADS -->
+        <div id="viewRecurringBills" class="hidden space-y-6">
+          
+          <!-- Recurring Header -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-rose-50/70 dark:bg-rose-950/40 p-4 rounded-xl border border-rose-200 dark:border-rose-900/60">
+            <div>
+              <h2 class="text-sm font-bold text-rose-950 dark:text-rose-200 flex items-center space-x-2">
+                <i data-lucide="zap" class="w-4 h-4 text-rose-600"></i>
+                <span data-i18n="bills_view_title">Monthly Office Overhead & Recurring Charges</span>
+              </h2>
+              <p class="text-[11px] text-rose-800/80 dark:text-rose-300/80 mt-0.5" data-i18n="bills_view_subtitle">
+                Payment cadence for Landlord Rent, PEA Electricity, MWA Water, AIS Fibre, True backup, and Weekly Cleaning
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button onclick="openBillModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span data-i18n="add_new_bill">+ Add Recurring Bill</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bills KPI Metrics -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+                📅
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="bills_monthly_commit">Monthly Commitment</div>
+                <div id="billsTotalCommitmentDisplay" class="text-base font-bold font-mono text-gray-900 dark:text-white">฿0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                ✅
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="bills_paid_month">Paid This Month</div>
+                <div id="billsPaidDisplay" class="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400">฿0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                ⏳
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="bills_remaining">Remaining to Pay</div>
+                <div id="billsRemainingDisplay" class="text-base font-bold font-mono text-amber-600 dark:text-amber-400">฿0</div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-neutral-800 p-3.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 shadow-sm flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                🔔
+              </div>
+              <div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold" data-i18n="bills_next_due">Next Bill Due</div>
+                <div id="billsNextDueDisplay" class="text-xs font-bold text-gray-900 dark:text-white truncate">10 Oct (PEA)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recurring Bills Cards & Payment Details -->
+          <div id="recurringBillsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- VIEW: KIBO'S OFFICE MANAGER TUTORIAL & HANDBOOK -->
+        <div id="viewTutorial" class="hidden space-y-6 max-w-5xl">
+          <!-- Welcome Hero Banner -->
+          <div class="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none text-9xl">👑</div>
+            <div class="relative z-10 space-y-3">
+              <div class="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold">
+                <span>👑 Office Manager Edition</span>
+                <span>•</span>
+                <span>Chiang Mai Headquarters</span>
+              </div>
+              <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">
+                Welcome Kibo! / ยินดีต้อนรับ Kibo
+              </h2>
+              <p class="text-xs md:text-sm text-amber-100 max-w-2xl leading-relaxed">
+                This interactive handbook will teach you everything you need to know to run the Chiang Mai office smoothly: supporting the team, ordering supplies, managing bills, coordinating with local handworkers, and keeping our workplace top-notch.
+              </p>
+              <div class="flex flex-wrap items-center gap-2.5 pt-2">
+                <button onclick="openKiboTutorialModal(0)" class="bg-white text-amber-900 hover:bg-amber-50 font-bold px-4 py-2 rounded-xl text-xs shadow-md flex items-center space-x-2 transition transform active:scale-95">
+                  <i data-lucide="play" class="w-4 h-4 fill-amber-900"></i>
+                  <span>Start Step-by-Step Tour / เริ่มทัวร์ระบบ</span>
+                </button>
+                <button onclick="document.getElementById('phrasesSection').scrollIntoView({ behavior: 'smooth' })" class="bg-black/30 hover:bg-black/40 text-white font-medium px-3.5 py-2 rounded-xl text-xs backdrop-blur border border-white/20 flex items-center space-x-1.5 transition">
+                  <i data-lucide="volume-2" class="w-4 h-4"></i>
+                  <span>Useful Thai Phrases / ประโยคภาษาไทยจำเป็น</span>
+                </button>
+                <button onclick="document.getElementById('cadenceSection').scrollIntoView({ behavior: 'smooth' })" class="bg-black/30 hover:bg-black/40 text-white font-medium px-3.5 py-2 rounded-xl text-xs backdrop-blur border border-white/20 flex items-center space-x-1.5 transition">
+                  <i data-lucide="check-square" class="w-4 h-4"></i>
+                  <span>Daily Checklist / ตารางงานประจำวัน</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 1: Office Structure & Directory -->
+          <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 md:p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-neutral-700 pb-3">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-sm">1</span>
+                <div>
+                  <h3 class="font-bold text-sm text-gray-900 dark:text-white">Office Organization & Key Directory / โครงสร้างทีมงานและออฟฟิศ</h3>
+                  <p class="text-[11px] text-gray-500">Know your team, your workspaces, and who you are supporting daily</p>
+                </div>
+              </div>
+              <span class="text-xs bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded font-mono">Teams & Rooms</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+              <!-- Card: Kibo -->
+              <div class="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-3.5 space-y-1.5">
+                <div class="flex items-center space-x-2">
+                  <span class="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-xs">K</span>
+                  <div class="font-bold text-amber-900 dark:text-amber-200">Kibo (You)</div>
+                </div>
+                <div class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold uppercase tracking-wider">Office Manager / ผู้จัดการออฟฟิศ</div>
+                <p class="text-gray-600 dark:text-neutral-300 text-[11px] leading-relaxed">
+                  Head of operations, facilities, vendor relationships (AIS, True, Landlord, Cleaner), inventory, and team workplace happiness in Chiang Mai.
+                </p>
+              </div>
+
+              <!-- Card: Supported Colleagues -->
+              <div class="bg-gray-50 dark:bg-neutral-900/60 border border-gray-200 dark:border-neutral-700 rounded-xl p-3.5 space-y-1.5 md:col-span-2">
+                <div class="font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                  <span>👥 Colleagues You Support / สมาชิกในทีม</span>
+                  <span class="text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-1.5 py-0.2 rounded font-normal">6 Members</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+                  <div class="p-1.5 bg-white dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"><span class="font-bold text-indigo-600 dark:text-indigo-400">Pierre</span>: Executive / Legal</div>
+                  <div class="p-1.5 bg-white dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"><span class="font-bold text-emerald-600 dark:text-emerald-400">Jérémy</span>: Tech & Network</div>
+                  <div class="p-1.5 bg-white dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"><span class="font-bold text-blue-600 dark:text-blue-400">Matthieu</span>: Team GMB</div>
+                  <div class="p-1.5 bg-white dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"><span class="font-bold text-purple-600 dark:text-purple-400">Marvin</span>: Design & Setup</div>
+                  <div class="p-1.5 bg-white dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"><span class="font-bold text-teal-600 dark:text-teal-400">Alexandre</span>: Team SEO</div>
+                  <div class="p-1.5 bg-white dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"><span class="font-bold text-rose-600 dark:text-rose-400">Mailys</span>: Team Ad</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 7 Rooms Overview -->
+            <div class="pt-2">
+              <div class="font-semibold text-gray-800 dark:text-gray-200 text-xs mb-2 flex items-center space-x-1.5">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span>The 7 Official Office Rooms in Chiang Mai / 7 ห้องและโซนทำงาน</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-[11px] text-center">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                  <div class="text-base">🌿</div>
+                  <div class="font-bold text-emerald-800 dark:text-emerald-300" data-i18n="room_exterieur">Exterieur (Outdoor)</div>
+                  <div class="text-[9px] text-emerald-600" data-i18n="room_subtitle_exterieur">Terraces & garden</div>
+                </div>
+                <div class="p-2 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                  <div class="text-base">💼</div>
+                  <div class="font-bold text-indigo-800 dark:text-indigo-300" data-i18n="room_private">Private Office</div>
+                  <div class="text-[9px] text-indigo-600" data-i18n="room_subtitle_private">Private workspace</div>
+                </div>
+                <div class="p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div class="text-base">🖥️</div>
+                  <div class="font-bold text-blue-800 dark:text-blue-300" data-i18n="room_common">Common Office</div>
+                  <div class="text-[9px] text-blue-600" data-i18n="room_subtitle_common">Shared workspace</div>
+                </div>
+                <div class="p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div class="text-base">☕</div>
+                  <div class="font-bold text-amber-800 dark:text-amber-300" data-i18n="room_kitchen">Kitchen</div>
+                  <div class="text-[9px] text-amber-600" data-i18n="room_subtitle_kitchen">Coffee & pantry</div>
+                </div>
+                <div class="p-2 bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800 rounded-lg">
+                  <div class="text-base">🚿</div>
+                  <div class="font-bold text-teal-800 dark:text-teal-300" data-i18n="room_bathroom">Bathroom</div>
+                  <div class="text-[9px] text-teal-600" data-i18n="room_subtitle_bathroom">Sanitary facilities</div>
+                </div>
+                <div class="p-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
+                  <div class="text-base">🌇</div>
+                  <div class="font-bold text-orange-800 dark:text-orange-300" data-i18n="room_rooftop">Rooftop</div>
+                  <div class="text-[9px] text-orange-600" data-i18n="room_subtitle_rooftop">Sunset terrace</div>
+                </div>
+                <div class="p-2 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                  <div class="text-base">🎯</div>
+                  <div class="font-bold text-purple-800 dark:text-purple-300" data-i18n="room_playground">Common Space / Playground</div>
+                  <div class="text-[9px] text-purple-600" data-i18n="room_subtitle_playground">Lounge & meetings</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Interactive Cadence Checklist for Kibo -->
+          <div id="cadenceSection" class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 md:p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-neutral-700 pb-3">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 flex items-center justify-center font-bold text-sm">2</span>
+                <div>
+                  <h3 class="font-bold text-sm text-gray-900 dark:text-white">Kibo's Routine & Checklist / ตารางงานประจำวันและสัปดาห์</h3>
+                  <p class="text-[11px] text-gray-500">Live interactive checklist with persistent progress tracking</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span id="kiboChecklistProgress" class="text-xs font-bold font-mono text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">0% Done</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <!-- Morning Routine -->
+              <div class="bg-gray-50 dark:bg-neutral-900/60 p-4 rounded-xl border border-gray-200/80 dark:border-neutral-700 space-y-2.5">
+                <div class="font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                  <span class="flex items-center space-x-1.5">
+                    <span>☀️ Morning Routine (08:30 - 09:30)</span>
+                  </span>
+                  <span class="text-[10px] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-1.5 py-0.2 rounded font-medium">Daily / ประจำวัน</span>
+                </div>
+                <div class="space-y-2 pt-1 text-[11px]" id="kiboMorningChecklist">
+                  <!-- Rendered dynamically with checkboxes -->
+                </div>
+              </div>
+
+              <!-- Friday & Monthly Routine -->
+              <div class="bg-gray-50 dark:bg-neutral-900/60 p-4 rounded-xl border border-gray-200/80 dark:border-neutral-700 space-y-2.5">
+                <div class="font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                  <span class="flex items-center space-x-1.5">
+                    <span>🧹 Friday & Cadence Routine (16:30 - 17:30)</span>
+                  </span>
+                  <span class="text-[10px] bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 px-1.5 py-0.2 rounded font-medium">Weekly / ประจำสัปดาห์</span>
+                </div>
+                <div class="space-y-2 pt-1 text-[11px]" id="kiboWeeklyChecklist">
+                  <!-- Rendered dynamically with checkboxes -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: The 3 Core Contacts & 1-Click Dialing -->
+          <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 md:p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-neutral-700 pb-3">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-sm">3</span>
+                <div>
+                  <h3 class="font-bold text-sm text-gray-900 dark:text-white">Essential Handworkers & 1-Click Dialing / ช่างและเบอร์ติดต่อด่วน</h3>
+                  <p class="text-[11px] text-gray-500">The 3 primary contacts you will deal with regularly</p>
+                </div>
+              </div>
+              <button onclick="switchView('handworkers')" class="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center space-x-1">
+                <span>Open Contacts</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+              <!-- AIS -->
+              <div class="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="font-bold text-emerald-900 dark:text-emerald-200 flex items-center space-x-1.5">
+                    <span>📶 AIS Fibre Support</span>
+                  </div>
+                  <a href="tel:1175" class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[11px] font-bold flex items-center space-x-1 hover:bg-emerald-700">
+                    <i data-lucide="phone" class="w-3 h-3"></i>
+                    <span>1175</span>
+                  </a>
+                </div>
+                <p class="text-[11px] text-emerald-800/80 dark:text-emerald-300 leading-relaxed">
+                  Call when Wi-Fi is slow, mesh drops connection, or ONT red light blinks. Press 2 for English.
+                </p>
+                <div class="text-[10px] text-gray-500 bg-white/70 dark:bg-neutral-800/80 p-1.5 rounded">
+                  📌 Circuit ID: <strong>8801992415</strong> (Nimman Hub)
+                </div>
+              </div>
+
+              <!-- True -->
+              <div class="bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3.5 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="font-bold text-red-900 dark:text-red-200 flex items-center space-x-1.5">
+                    <span>🔴 True Enterprise</span>
+                  </div>
+                  <a href="tel:1242" class="bg-red-600 text-white px-2 py-0.5 rounded text-[11px] font-bold flex items-center space-x-1 hover:bg-red-700">
+                    <i data-lucide="phone" class="w-3 h-3"></i>
+                    <span>1242</span>
+                  </a>
+                </div>
+                <p class="text-[11px] text-red-800/80 dark:text-red-300 leading-relaxed">
+                  Handles the failover 5G unlimited SIM in the secondary router. If AIS has a fiber cut, True kicks in automatically.
+                </p>
+                <div class="text-[10px] text-gray-500 bg-white/70 dark:bg-neutral-800/80 p-1.5 rounded">
+                  📌 SIM No: <strong>095-234-8899</strong> (Data backup)
+                </div>
+              </div>
+
+              <!-- Landlord Agent -->
+              <div class="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3.5 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="font-bold text-blue-900 dark:text-blue-200 flex items-center space-x-1.5">
+                    <span>🏢 Landlord Agent</span>
+                  </div>
+                  <a href="tel:0818829900" class="bg-blue-600 text-white px-2 py-0.5 rounded text-[11px] font-bold flex items-center space-x-1 hover:bg-blue-700">
+                    <i data-lucide="phone" class="w-3 h-3"></i>
+                    <span>081-882-9900</span>
+                  </a>
+                </div>
+                <p class="text-[11px] text-blue-800/80 dark:text-blue-300 leading-relaxed">
+                  Khun Somchai. Contact for building repairs, water pressure pumps, lease renewals, and expat TM30 landlord registration letters.
+                </p>
+                <div class="text-[10px] text-gray-500 bg-white/70 dark:bg-neutral-800/80 p-1.5 rounded">
+                  📌 Line ID: <strong>@somchai_prop</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Supplies & Live Courier Tracking Guide -->
+          <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 md:p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-neutral-700 pb-3">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-sm">4</span>
+                <div>
+                  <h3 class="font-bold text-sm text-gray-900 dark:text-white">Supplies, Rooms & Live Courier Tracking / สั่งของใช้และติดตามพัสดุ</h3>
+                  <p class="text-[11px] text-gray-500">How to order, compute discounts, assign destination rooms, and track parcels</p>
+                </div>
+              </div>
+              <button onclick="switchView('supplies')" class="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1">
+                <span>Open Supplies View</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+              <div class="p-3 bg-gray-50 dark:bg-neutral-900/60 rounded-xl border border-gray-200/80 dark:border-neutral-700 space-y-1">
+                <div class="font-bold text-gray-900 dark:text-white">1. Dual Pricing (฿)</div>
+                <div class="text-[10px] text-gray-500">Initial Price vs Discounted Price</div>
+                <p class="text-[11px] text-gray-600 dark:text-neutral-400">
+                  Always enter both original and promo prices. The system automatically computes and highlights total savings in the budget!
+                </p>
+              </div>
+
+              <div class="p-3 bg-gray-50 dark:bg-neutral-900/60 rounded-xl border border-gray-200/80 dark:border-neutral-700 space-y-1">
+                <div class="font-bold text-gray-900 dark:text-white">2. Room & Beneficiary</div>
+                <div class="text-[10px] text-gray-500">Where it goes & who asked</div>
+                <p class="text-[11px] text-gray-600 dark:text-neutral-400">
+                  Tag the exact room (Kitchen, Bathroom, etc.) and the team (Team GMB, Team SEO, Team Ad, Pierre, Office Common).
+                </p>
+              </div>
+
+              <div class="p-3 bg-gray-50 dark:bg-neutral-900/60 rounded-xl border border-gray-200/80 dark:border-neutral-700 space-y-1">
+                <div class="font-bold text-gray-900 dark:text-white">3. Live Courier Tracking</div>
+                <div class="text-[10px] text-gray-500">Flash, Kerry, Thai Post, Shopee</div>
+                <p class="text-[11px] text-gray-600 dark:text-neutral-400">
+                  Enter the tracking number. The "Track Online" button directly launches the courier's official tracking portal.
+                </p>
+              </div>
+
+              <div class="p-3 bg-gray-50 dark:bg-neutral-900/60 rounded-xl border border-gray-200/80 dark:border-neutral-700 space-y-1">
+                <div class="font-bold text-gray-900 dark:text-white">4. 1-Click Restocking</div>
+                <div class="text-[10px] text-gray-500">Mark Received & Stocked</div>
+                <p class="text-[11px] text-gray-600 dark:text-neutral-400">
+                  When the rider drops off the parcel at the office, click "Mark Received" to immediately complete the order and update stock.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Monthly Bills Deadlines & How to Pay -->
+          <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 md:p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-neutral-700 pb-3">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 flex items-center justify-center font-bold text-sm">5</span>
+                <div>
+                  <h3 class="font-bold text-sm text-gray-900 dark:text-white">Monthly Overhead Bills Cadence in Thailand / กำหนดชำระบิลรายเดือน</h3>
+                  <p class="text-[11px] text-gray-500">Never miss a utility deadline in Chiang Mai</p>
+                </div>
+              </div>
+              <button onclick="switchView('recurring_bills')" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1">
+                <span>Open Bills View</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div class="p-3 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/60 rounded-xl space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-rose-900 dark:text-rose-300">1st: Office Rent</span>
+                    <span class="font-mono font-bold text-gray-800 dark:text-gray-200">฿45,000</span>
+                  </div>
+                  <p class="text-[11px] text-gray-600 dark:text-neutral-400">Transfer via Bangkok Bank (BBL) to Landlord Somchai. Save slip as PDF.</p>
+                </div>
+
+                <div class="p-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-amber-900 dark:text-amber-300">10th: PEA Electricity</span>
+                    <span class="font-mono font-bold text-gray-800 dark:text-gray-200">฿14,200</span>
+                  </div>
+                  <p class="text-[11px] text-gray-600 dark:text-neutral-400">Scan QR on PEA Smart Plus App or K PLUS / SCB (CA 02003884192).</p>
+                </div>
+
+                <div class="p-3 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 rounded-xl space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-blue-900 dark:text-blue-300">15th: MWA Water</span>
+                    <span class="font-mono font-bold text-gray-800 dark:text-gray-200">฿1,450</span>
+                  </div>
+                  <p class="text-[11px] text-gray-600 dark:text-neutral-400">Scan barcode on utility slip via mobile banking app.</p>
+                </div>
+
+                <div class="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 rounded-xl space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-emerald-900 dark:text-emerald-300">18th: AIS Fibre 1Gbps</span>
+                    <span class="font-mono font-bold text-gray-800 dark:text-gray-200">฿2,640</span>
+                  </div>
+                  <p class="text-[11px] text-gray-600 dark:text-neutral-400">Corporate e-Bill payment via QR PromptPay. Get tax invoice.</p>
+                </div>
+
+                <div class="p-3 bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/60 rounded-xl space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-red-900 dark:text-red-300">20th: True Backup SIM</span>
+                    <span class="font-mono font-bold text-gray-800 dark:text-gray-200">฿1,060</span>
+                  </div>
+                  <p class="text-[11px] text-gray-600 dark:text-neutral-400">True iService corporate account or Mobile Banking bill pay.</p>
+                </div>
+
+                <div class="p-3 bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/60 rounded-xl space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-purple-900 dark:text-purple-300">Fridays: P'Noi Cleaning</span>
+                    <span class="font-mono font-bold text-gray-800 dark:text-gray-200">฿1,800/wk</span>
+                  </div>
+                  <p class="text-[11px] text-gray-600 dark:text-neutral-400">PromptPay to 082-190-7765 after Friday 17:00 clean is completed.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 6: Useful Thai Phrases for Kibo with Audio Speech -->
+          <div id="phrasesSection" class="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 md:p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-neutral-700 pb-3">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-sm">6</span>
+                <div>
+                  <h3 class="font-bold text-sm text-gray-900 dark:text-white">Essential Thai Communication Cheat Sheet / ประโยคภาษาไทยที่จำเป็น (พร้อมเสียงพูด)</h3>
+                  <p class="text-[11px] text-gray-500">Click the speaker icon 🔊 to hear authentic Thai pronunciation</p>
+                </div>
+              </div>
+              <span class="text-xs bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded font-mono">Audio Enabled 🔊</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs" id="kiboThaiPhrasesList">
+              <!-- Dynamically populated with interactive audio speech buttons -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- APPOINTMENT MODAL (Google & Apple Calendar Sync) -->
+  <div id="appointmentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between bg-purple-50 dark:bg-neutral-800/80">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">📅</span>
+          <h3 id="apptModalHeader" class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="modal_appt_header">Schedule Appointment / RDV</h3>
+        </div>
+        <button onclick="closeAppointmentModal()" class="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-3.5 text-xs">
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_title">Title / Meeting Subject</label>
+          <input type="text" id="apptTitleInput" placeholder="e.g. AIS Fibre line maintenance inspection at Nimman" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2.5 text-gray-800 dark:text-gray-100 font-medium">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_date">Date</label>
+            <input type="date" id="apptDateInput" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_time">Start Time</label>
+              <input type="time" id="apptTimeInput" value="10:00" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            </div>
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_endtime">End Time</label>
+              <input type="time" id="apptEndTimeInput" value="11:00" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_attendees">Team Members Concerned</label>
+            <select id="apptAttendeeSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="Kibo">Kibo (Office Manager)</option>
+              <option value="Pierre">Pierre</option>
+              <option value="Jérémy">Jérémy</option>
+              <option value="Matthieu">Matthieu</option>
+              <option value="Marvin">Marvin</option>
+              <option value="Alexandre">Alexandre</option>
+              <option value="Mailys">Mailys</option>
+              <option value="All Team">All Team (Pierre, Jérémy, Matthieu, Marvin, Alexandre, Mailys, Kibo)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_contact">External Contact (AIS, True, Agent)</label>
+            <select id="apptContactSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="">-- None / Internal --</option>
+              <option value="AIS Fibre Support (1175)">📶 AIS Fibre Business Support (1175)</option>
+              <option value="True Fibre Support (1242)">🔴 True Fibre & Telecom (1242)</option>
+              <option value="Landlord / Visa Agent (081-882-9900)">🏢 Landlord & Visa Agent (081-882-9900)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_room">Office Room / Location</label>
+          <select id="apptRoomSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            <option value="Common Office">🖥️ Common Office</option>
+            <option value="Private office">💼 Private office</option>
+            <option value="Common Space/Playground">🎯 Common Space/Playground</option>
+            <option value="Kitchen">☕ Kitchen</option>
+            <option value="Rooftop">🌇 Rooftop</option>
+            <option value="Exterieur">🌿 Exterieur</option>
+            <option value="Bathroom">🚿 Bathroom</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_appt_notes">Notes / Meeting Agenda</label>
+          <textarea id="apptNotesInput" rows="2" placeholder="Topics to discuss, files to prepare, technician instructions..." class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100"></textarea>
+        </div>
+
+        <!-- 1-Click Sync Calendar Preview Buttons -->
+        <div class="p-3 bg-purple-50/60 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-900/60 flex items-center justify-between">
+          <span class="text-purple-900 dark:text-purple-300 font-medium">Add to Calendar:</span>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="previewAddGoogleCalendar()" class="px-2.5 py-1 rounded bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-blue-600 font-semibold flex items-center space-x-1 hover:bg-blue-50">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+              <span>Google Calendar</span>
+            </button>
+            <button type="button" onclick="previewDownloadIcs()" class="px-2.5 py-1 rounded bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-purple-700 font-semibold flex items-center space-x-1 hover:bg-purple-50">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Apple Calendar (.ics)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <button id="apptDeleteBtn" onclick="deleteCurrentAppointment()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1 hidden">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btn_delete">Delete</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button onclick="closeAppointmentModal()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-neutral-600 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition" data-i18n="btn_cancel">Cancel</button>
+          <button onclick="saveCurrentAppointment()" class="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium shadow-sm transition flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_save">Save Appointment</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TASK MODAL -->
+  <div id="taskModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="h-20 bg-gradient-to-r from-amber-500 to-orange-500 relative flex-shrink-0">
+        <button onclick="closeTaskModal()" class="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+        <div class="absolute -bottom-5 left-6">
+          <button id="modalIconBtn" onclick="toggleEmojiPicker()" class="w-12 h-12 rounded-xl bg-white dark:bg-neutral-800 shadow-md border border-gray-200 dark:border-neutral-700 flex items-center justify-center text-2xl hover:scale-105 transition">
+            📋
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="pt-8 px-6 pb-6 overflow-y-auto space-y-4 flex-1 text-xs">
+        <div>
+          <input 
+            type="text" 
+            id="modalTitleInput" 
+            placeholder="Task title (e.g. Schedule AIS Fibre check for SEO team)" 
+            data-i18n-placeholder="modal_title_ph"
+            class="w-full text-lg md:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-gray-400 dark:text-white"
+          >
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 dark:bg-neutral-900/60 p-3.5 rounded-xl border border-gray-100 dark:border-neutral-800">
+          <!-- Status -->
+          <div class="flex items-center space-x-2">
+            <span class="w-20 text-gray-500 dark:text-neutral-400 flex items-center space-x-1">
+              <i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>
+              <span data-i18n="prop_status">Status</span>
+            </span>
+            <select id="modalStatusSelect" class="flex-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md py-1.5 px-2 text-gray-800 dark:text-gray-200 font-medium">
+              <option value="todo" data-i18n="status_todo">To Do (ยังไม่เริ่ม)</option>
+              <option value="in_progress" data-i18n="status_in_progress">In Progress (กำลังดำเนินการ)</option>
+              <option value="waiting" data-i18n="status_waiting">Waiting / External (รอติดต่อภายนอก)</option>
+              <option value="done" data-i18n="status_done">Done (เสร็จสิ้น)</option>
+            </select>
+          </div>
+
+          <!-- Priority -->
+          <div class="flex items-center space-x-2">
+            <span class="w-20 text-gray-500 dark:text-neutral-400 flex items-center space-x-1">
+              <i data-lucide="flag" class="w-3.5 h-3.5"></i>
+              <span data-i18n="prop_priority">Priority</span>
+            </span>
+            <select id="modalPrioritySelect" class="flex-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md py-1.5 px-2 text-gray-800 dark:text-gray-200 font-medium">
+              <option value="urgent" data-i18n="prio_urgent">🔥 Urgent (ด่วนที่สุด)</option>
+              <option value="high" data-i18n="prio_high">🔴 High (สูง)</option>
+              <option value="medium" data-i18n="prio_medium">🟡 Medium (ปานกลาง)</option>
+              <option value="low" data-i18n="prio_low">🟢 Low (ทั่วไป)</option>
+            </select>
+          </div>
+
+          <!-- Team / Beneficiary -->
+          <div class="flex items-center space-x-2">
+            <span class="w-20 text-gray-500 dark:text-neutral-400 flex items-center space-x-1">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>
+              <span>Team</span>
+            </span>
+            <select id="modalTeamSelect" class="flex-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md py-1.5 px-2 text-gray-800 dark:text-gray-200 font-medium">
+              <option value="Team GMB">Team GMB</option>
+              <option value="Team SEO">Team SEO</option>
+              <option value="Team Ad">Team Ad</option>
+              <option value="Pierre">Pierre</option>
+              <option value="Office Common">Office Common</option>
+            </select>
+          </div>
+
+          <!-- Assignee / Member -->
+          <div class="flex items-center space-x-2">
+            <span class="w-20 text-gray-500 dark:text-neutral-400 flex items-center space-x-1">
+              <i data-lucide="user" class="w-3.5 h-3.5"></i>
+              <span>Assignee</span>
+            </span>
+            <select id="modalAssigneeSelect" class="flex-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md py-1.5 px-2 text-gray-800 dark:text-gray-200 font-medium">
+              <option value="Kibo">Kibo (Office Manager)</option>
+              <option value="Pierre">Pierre</option>
+              <option value="Jérémy">Jérémy</option>
+              <option value="Matthieu">Matthieu</option>
+              <option value="Marvin">Marvin</option>
+              <option value="Alexandre">Alexandre</option>
+              <option value="Mailys">Mailys</option>
+            </select>
+          </div>
+
+          <!-- Due Date -->
+          <div class="flex items-center space-x-2">
+            <span class="w-20 text-gray-500 dark:text-neutral-400 flex items-center space-x-1">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+              <span data-i18n="prop_due">Due Date</span>
+            </span>
+            <input type="date" id="modalDueDateInput" class="flex-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md py-1 px-2 text-gray-800 dark:text-gray-200">
+          </div>
+
+          <!-- Budget (THB) -->
+          <div class="flex items-center space-x-2">
+            <span class="w-20 text-gray-500 dark:text-neutral-400 flex items-center space-x-1">
+              <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
+              <span data-i18n="prop_cost">Cost (฿)</span>
+            </span>
+            <input type="number" id="modalCostInput" placeholder="0 THB" class="flex-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md py-1 px-2 text-gray-800 dark:text-gray-200">
+          </div>
+        </div>
+
+        <!-- Contact Section (AIS, True, Agent) -->
+        <div class="bg-emerald-50/70 dark:bg-emerald-950/30 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="font-semibold text-emerald-900 dark:text-emerald-200 flex items-center space-x-1.5">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Link Contact (AIS • True • Agent)</span>
+            </label>
+            <div id="modalHandworkerQuickActions" class="flex items-center space-x-2 hidden">
+              <a id="modalCallHandworkerBtn" href="#" class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold flex items-center space-x-1 hover:bg-emerald-700 transition">
+                <i data-lucide="phone-call" class="w-3 h-3"></i>
+                <span data-i18n="btn_call">Call</span>
+              </a>
+              <button type="button" id="modalCopyLineBtn" onclick="copyHandworkerLine()" class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 flex items-center space-x-1">
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                <span>Line ID</span>
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <select id="modalHandworkerSelect" onchange="onTaskHandworkerChange(this.value)" class="bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-neutral-700 rounded-lg p-1.5 text-gray-800 dark:text-gray-200">
+              <option value="">-- No contact linked --</option>
+            </select>
+            <input type="text" id="modalHandworkerPhoneInput" placeholder="Phone number" class="bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-neutral-700 rounded-lg p-1.5 text-gray-800 dark:text-gray-200">
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between font-semibold text-gray-700 dark:text-gray-300">
+            <span class="flex items-center space-x-1.5">
+              <i data-lucide="check-square" class="w-4 h-4 text-amber-600"></i>
+              <span data-i18n="subtasks_title">Action Items / Checklist</span>
+            </span>
+            <button type="button" onclick="addChecklistItem()" class="text-amber-600 hover:text-amber-700 text-[11px] font-normal flex items-center space-x-1">
+              <i data-lucide="plus" class="w-3 h-3"></i>
+              <span data-i18n="add_item">Add item</span>
+            </button>
+          </div>
+          <div id="modalChecklistContainer" class="space-y-1.5"></div>
+        </div>
+
+        <!-- Photos -->
+        <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800">
+          <div class="flex items-center justify-between font-semibold text-gray-700 dark:text-gray-300">
+            <span class="flex items-center space-x-1.5">
+              <i data-lucide="image" class="w-4 h-4 text-amber-600"></i>
+              <span data-i18n="task_photos_title">Photos & Image Attachments</span>
+            </span>
+            <div class="flex items-center space-x-2">
+              <label class="text-amber-600 hover:text-amber-700 text-[11px] cursor-pointer flex items-center space-x-1">
+                <i data-lucide="upload" class="w-3 h-3"></i>
+                <span data-i18n="upload_photo">Upload Photo</span>
+                <input type="file" id="modalPhotoFileInput" accept="image/*" class="hidden" onchange="handleModalPhotoUpload(event)">
+              </label>
+              <span class="text-gray-300">|</span>
+              <button type="button" onclick="promptAddPhotoUrl()" class="text-amber-600 hover:text-amber-700 text-[11px] flex items-center space-x-1">
+                <i data-lucide="link" class="w-3 h-3"></i>
+                <span data-i18n="add_photo_url">Add URL</span>
+              </button>
+            </div>
+          </div>
+          <div id="modalPhotosContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+        </div>
+
+        <!-- Notes -->
+        <div class="space-y-2">
+          <label class="font-semibold text-gray-700 dark:text-gray-300 flex items-center space-x-1.5">
+            <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i>
+            <span data-i18n="notes_title">Notes & Details</span>
+          </label>
+          <textarea 
+            id="modalNotesInput" 
+            rows="3" 
+            placeholder="Add remarks or instructions for the team..." 
+            data-i18n-placeholder="notes_placeholder"
+            class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-xl p-3 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <button id="modalDeleteBtn" onclick="deleteCurrentTask()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1 hidden">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btn_delete">Delete Task</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button onclick="closeTaskModal()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-neutral-600 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition" data-i18n="btn_cancel">Cancel</button>
+          <button onclick="saveCurrentTask()" class="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-sm transition flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_save">Save Changes</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SUPPLY & ORDER TRACKING MODAL (With Regular Price, Discounted Price, Qty, Room, Team) -->
+  <div id="supplyModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between bg-gray-50 dark:bg-neutral-800/80">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">📦</span>
+          <h3 id="supplyModalHeader" class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="modal_supply_header">Add Office Supply Item</h3>
+        </div>
+        <button onclick="closeSupplyModal()" class="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <!-- Item Name -->
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_supply_name">Item Name & Brand / รายการของใช้</label>
+          <input type="text" id="supplyNameInput" placeholder="e.g. Ergonomic Footrest for Team SEO (ที่พักเท้า)" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2.5 text-gray-800 dark:text-gray-100 font-medium">
+        </div>
+
+        <!-- Room & Beneficiary Team (NEW) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-amber-50/50 dark:bg-neutral-800/60 p-3 rounded-xl border border-amber-200/60 dark:border-neutral-700">
+          <div>
+            <label class="font-semibold text-amber-900 dark:text-amber-300 block mb-1" data-i18n="lbl_supply_room">Destination Room / Piece des bureaux</label>
+            <select id="supplyRoomSelect" class="w-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="Common Office">🖥️ Common Office (ห้องทำงานส่วนกลาง)</option>
+              <option value="Private office">💼 Private office (ห้องทำงานส่วนตัว)</option>
+              <option value="Common Space/Playground">🎯 Common Space/Playground (โซนพักผ่อน)</option>
+              <option value="Kitchen">☕ Kitchen (ห้องครัว)</option>
+              <option value="Bathroom">🚿 Bathroom (ห้องน้ำ)</option>
+              <option value="Rooftop">🌇 Rooftop (ดาดฟ้า)</option>
+              <option value="Exterieur">🌿 Exterieur (ภายนอก / ระเบียง)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="font-semibold text-amber-900 dark:text-amber-300 block mb-1" data-i18n="lbl_supply_beneficiary">Necessary for Team / Person</label>
+            <select id="supplyBeneficiarySelect" class="w-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium">
+              <option value="Team GMB">Team GMB</option>
+              <option value="Team SEO">Team SEO</option>
+              <option value="Team Ad">Team Ad</option>
+              <option value="Pierre">Pierre</option>
+              <option value="Office Common">Office Common (ส่วนกลาง)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Photo Upload & Preview -->
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_supply_photo">Photo of Supply / รูปถ่ายสินค้า</label>
+          <div class="flex items-start space-x-3">
+            <div id="supplyPhotoPreview" class="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-neutral-800 flex-shrink-0 cursor-pointer" onclick="document.getElementById('supplyPhotoFileInput').click()">
+              <div class="text-center p-2 text-gray-400">
+                <i data-lucide="image" class="w-6 h-6 mx-auto mb-1"></i>
+                <span class="text-[10px] block" data-i18n="click_photo">Upload</span>
+              </div>
+            </div>
+            <div class="flex-1 space-y-2">
+              <label class="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 cursor-pointer inline-flex items-center space-x-1.5 text-gray-700 dark:text-neutral-300">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span data-i18n="upload_local_photo">Choose file from Mac</span>
+                <input type="file" id="supplyPhotoFileInput" accept="image/*" class="hidden" onchange="handleSupplyPhotoUpload(event)">
+              </label>
+              <div class="text-[11px] text-gray-400" data-i18n="supply_paste_url">or paste image URL:</div>
+              <input type="url" id="supplyPhotoUrlInput" placeholder="https://... photo link" onchange="updateSupplyPreviewFromUrl(this.value)" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            </div>
+          </div>
+        </div>
+
+        <!-- PRICING & QUANTITY (Original price, Discounted price, Qty, Total) -->
+        <div class="bg-gray-50 dark:bg-neutral-900 p-3 rounded-xl border border-gray-200 dark:border-neutral-700 space-y-2">
+          <div class="font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between">
+            <span class="flex items-center space-x-1">
+              <i data-lucide="badge-percent" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span data-i18n="supply_pricing_title">Pricing, Discount & Quantity (ราคา & จำนวน)</span>
+            </span>
+            <span id="supplySavingsPill" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold hidden">-0%</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-[11px] text-gray-500 block mb-1" data-i18n="supply_regular_price">Regular Price (ราคาปกติ ฿)</label>
+              <input type="number" id="supplyRegularPriceInput" oninput="calculateSupplyPricing()" placeholder="e.g. 1200" class="w-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 font-mono">
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-amber-600 block mb-1" data-i18n="supply_discount_price">Discount Price (ราคาลดแล้ว ฿)</label>
+              <input type="number" id="supplyPriceInput" oninput="calculateSupplyPricing()" placeholder="e.g. 950" class="w-full bg-white dark:bg-neutral-800 border border-amber-300 dark:border-amber-700 rounded-lg p-2 font-mono font-bold text-amber-700 dark:text-amber-300">
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="supply_quantity">Quantity (จำนวนชิ้น)</label>
+              <input type="number" id="supplyQuantityInput" oninput="calculateSupplyPricing()" value="1" min="1" class="w-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 font-mono font-bold">
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between text-xs">
+            <span class="text-gray-500">Total Budget (ราคารวม):</span>
+            <span id="supplyTotalPriceDisplay" class="font-bold font-mono text-sm text-gray-900 dark:text-white">฿0</span>
+          </div>
+        </div>
+
+        <!-- Store & Direct Link -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_supply_store">Store / Source (แหล่งซื้อ)</label>
+            <select id="supplyStoreSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="Shopee">🛍️ Shopee Mall Thailand</option>
+              <option value="Lazada">📦 Lazada Thailand</option>
+              <option value="OfficeMate">📦 OfficeMate Thailand</option>
+              <option value="Makro">🛒 Makro Chiang Mai</option>
+              <option value="HomePro">🏠 HomePro Chiang Mai</option>
+              <option value="Thai Watsadu">🔨 Thai Watsadu (ไทวัสดุ)</option>
+              <option value="Local Roaster">☕ Local Chiang Mai Roaster</option>
+              <option value="7-Eleven">🏪 7-Eleven Thailand</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_supply_link">Purchase Link (URL / เว็บไซต์)</label>
+            <input type="url" id="supplyUrlInput" placeholder="https://shopee.co.th/... or order link" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+          </div>
+        </div>
+
+        <!-- Stock Status -->
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_supply_status">Stock Status</label>
+          <select id="supplyStatusSelect" onchange="toggleSupplyTrackingFields(this.value)" class="w-full bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium">
+            <option value="need_order">🚨 Need to Order (ต้องสั่งด่วน)</option>
+            <option value="ordered">🚚 Ordered / On Way (สั่งแล้ว / รอจัดส่ง)</option>
+            <option value="low">⚠️ Low Stock (ใกล้หมด)</option>
+            <option value="in_stock">✅ In Stock (มีสต็อกพอ)</option>
+          </select>
+        </div>
+
+        <!-- ORDER TRACKING SECTION -->
+        <div id="supplyTrackingFieldsContainer" class="bg-blue-50/70 dark:bg-blue-950/30 p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-blue-900 dark:text-blue-200 flex items-center space-x-1.5" data-i18n="tracking_details_title">
+              <i data-lucide="truck" class="w-4 h-4 text-blue-600"></i>
+              <span>Order Tracking Details (ข้อมูลติดตามพัสดุ)</span>
+            </span>
+            <a id="supplyLiveTrackLinkBtn" href="#" target="_blank" class="hidden text-[11px] px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center space-x-1 transition">
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+              <span data-i18n="btn_track_live">Track Online</span>
+            </a>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_carrier">Courier / Delivery Service (ขนส่ง)</label>
+              <select id="supplyCarrierSelect" onchange="updateLiveTrackButton()" class="w-full bg-white dark:bg-neutral-800 border border-blue-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+                <option value="Flash">⚡ Flash Express</option>
+                <option value="Kerry">📦 Kerry Express (KEX)</option>
+                <option value="ThaiPost">📮 Thailand Post (ไปรษณีย์ไทย)</option>
+                <option value="JT">🚚 J&T Express</option>
+                <option value="ShopeeXpress">🛍️ Shopee Xpress (SPX)</option>
+                <option value="Grab">🛵 Grab Express (Chiang Mai)</option>
+                <option value="Lalamove">🚐 Lalamove Chiang Mai</option>
+                <option value="MakroDelivery">🛒 Makro Direct Delivery</option>
+                <option value="Other">📦 Other Courier</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_tracking_number">Tracking Number (เลขพัสดุ)</label>
+              <input type="text" id="supplyTrackingNumInput" oninput="updateLiveTrackButton()" placeholder="e.g. TH2039485012 or KER99281" class="w-full bg-white dark:bg-neutral-800 border border-blue-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-mono">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_order_date">Order Date (วันที่สั่งซื้อ)</label>
+              <input type="date" id="supplyOrderDateInput" class="w-full bg-white dark:bg-neutral-800 border border-blue-200 dark:border-neutral-700 rounded-lg p-1.5 text-gray-800 dark:text-gray-100">
+            </div>
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_est_delivery">Est. Delivery Date (กำหนดส่งถึง)</label>
+              <input type="date" id="supplyEstDeliveryInput" class="w-full bg-white dark:bg-neutral-800 border border-blue-200 dark:border-neutral-700 rounded-lg p-1.5 text-gray-800 dark:text-gray-100">
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="lbl_supply_notes">Specifications & Order Notes / บันทึกเพิ่มเติม</label>
+          <textarea id="supplyNotesInput" rows="2" placeholder="Packaging size, reorder threshold, branch shelf location..." class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100"></textarea>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <button id="supplyDeleteBtn" onclick="deleteCurrentSupply()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1 hidden">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btn_delete">Delete</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button onclick="closeSupplyModal()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-neutral-600 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition" data-i18n="btn_cancel">Cancel</button>
+          <button onclick="saveCurrentSupply()" class="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-sm transition flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_save">Save Supply</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTACT MODAL (AIS, True, Agent) -->
+  <div id="handworkerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between bg-emerald-50 dark:bg-neutral-800/80">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">📞</span>
+          <h3 id="handworkerModalHeader" class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="modal_hw_header">Contact (AIS / True / Agent)</h3>
+        </div>
+        <button onclick="closeHandworkerModal()" class="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-3.5 text-xs">
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_contact_name">Contact Name / Provider</label>
+          <input type="text" id="hwNameInput" placeholder="e.g. AIS Fibre Business Support" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_provider_type">Provider Type</label>
+            <select id="hwSpecialtySelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="ais">📶 AIS Fibre / Telecom</option>
+              <option value="true">🔴 True Fibre / Mobile</option>
+              <option value="agent">🏢 Landlord & Visa Agent</option>
+              <option value="other">🛠️ Other Support</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_phone">Phone Number</label>
+            <input type="tel" id="hwPhoneInput" placeholder="1175 or 081-..." class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_line_id">Line ID / WhatsApp</label>
+            <input type="text" id="hwLineInput" placeholder="@aiscontact" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+          </div>
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_contract_ref">Account / Contract Ref</label>
+            <input type="text" id="hwRateInput" placeholder="Account no. 880293819" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <button id="hwDeleteBtn" onclick="deleteCurrentHandworker()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1 hidden">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btn_delete">Delete</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button onclick="closeHandworkerModal()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-neutral-600 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition" data-i18n="btn_cancel">Cancel</button>
+          <button onclick="saveCurrentHandworker()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm transition flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_save">Save Contact</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RENOVATION PROJECT MODAL -->
+  <div id="renovationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between bg-gray-50 dark:bg-neutral-800/80">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">🔨</span>
+          <h3 id="renovationModalHeader" class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="modal_reno_header">Office Renovation & Repair Project</h3>
+        </div>
+        <button onclick="closeRenovationModal()" class="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_reno_title">Project Title / ชื่องานปรับปรุง</label>
+          <input type="text" id="renoTitleInput" placeholder="e.g. Acoustic Slats Installation in Phone Booth" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2.5 text-gray-800 dark:text-gray-100 font-medium">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_reno_stage">Stage</label>
+            <select id="renoStatusSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="planning">📐 Planning & Quoting</option>
+              <option value="approved">✅ Approved</option>
+              <option value="in_progress">🚧 In Progress</option>
+              <option value="completed">🎉 Completed</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_reno_room">Office Room</label>
+            <select id="renoLocationSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="Common Office">Common Office</option>
+              <option value="Private office">Private office</option>
+              <option value="Common Space/Playground">Common Space/Playground</option>
+              <option value="Kitchen">Kitchen</option>
+              <option value="Bathroom">Bathroom</option>
+              <option value="Rooftop">Rooftop</option>
+              <option value="Exterieur">Exterieur</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_reno_budget">Est. Budget (฿)</label>
+            <input type="number" id="renoBudgetInput" placeholder="25000" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_reno_contractor">Contractor / Technician Contact</label>
+          <input type="text" id="renoContractorInput" placeholder="e.g. Chang Chai Decor (089-445-1234)" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800">
+          <div class="flex items-center justify-between">
+            <label class="font-semibold text-gray-700 dark:text-gray-300 flex items-center space-x-1.5">
+              <i data-lucide="image" class="w-3.5 h-3.5 text-amber-600"></i>
+              <span data-i18n="modal_reno_photos">Site Photos (Before/After & Specs)</span>
+            </label>
+            <div class="flex items-center space-x-2">
+              <label class="text-amber-600 hover:text-amber-700 text-[11px] cursor-pointer flex items-center space-x-1">
+                <i data-lucide="upload" class="w-3 h-3"></i>
+                <span>Upload</span>
+                <input type="file" id="renoPhotoFileInput" accept="image/*" class="hidden" onchange="handleRenoPhotoUpload(event)">
+              </label>
+              <span class="text-gray-300">|</span>
+              <button type="button" onclick="promptAddRenoPhotoUrl()" class="text-amber-600 hover:text-amber-700 text-[11px] flex items-center space-x-1">
+                <i data-lucide="link" class="w-3 h-3"></i>
+                <span>Add URL</span>
+              </button>
+            </div>
+          </div>
+          <div id="renoPhotosContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_reno_notes">Work Scope & Notes</label>
+          <textarea id="renoNotesInput" rows="3" placeholder="Measurements, color codes, quote references..." class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100"></textarea>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <button id="renoDeleteBtn" onclick="deleteCurrentRenovation()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1 hidden">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btn_delete">Delete</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button onclick="closeRenovationModal()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-neutral-600 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition" data-i18n="btn_cancel">Cancel</button>
+          <button onclick="saveCurrentRenovation()" class="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-sm transition flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_save_project">Save Project</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IT ASSET MODAL -->
+  <div id="assetModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between bg-blue-50 dark:bg-neutral-800/80">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">💻</span>
+          <h3 id="assetModalHeader" class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="modal_it_header">IT Equipment & Asset Details</h3>
+        </div>
+        <button onclick="closeAssetModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_name">Device Name & Model</label>
+          <input type="text" id="assetNameInput" placeholder="e.g. MacBook Pro 16\" M3 Pro (36GB / 512GB Space Black)" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2.5 text-gray-800 dark:text-gray-100 font-medium">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_category">Category</label>
+            <select id="assetCategorySelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="Laptop">💻 Laptop (MacBook)</option>
+              <option value="Monitor">🖥️ Monitor / Screen (4K / 5K)</option>
+              <option value="Keyboard">⌨️ Keyboard / Mouse / Trackpad</option>
+              <option value="Audio">🎧 Audio, Headset & Mic</option>
+              <option value="Network">🔌 Docking Station & Network</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="font-semibold text-blue-900 dark:text-blue-300 block mb-1" data-i18n="modal_device_assignee">Assigned Person</label>
+            <select id="assetAssigneeSelect" class="w-full bg-blue-50/70 dark:bg-neutral-800 border border-blue-300 dark:border-blue-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-bold">
+              <option value="Kibo">Kibo (Office Manager)</option>
+              <option value="Marvin">Marvin</option>
+              <option value="Jérémy">Jérémy</option>
+              <option value="Matthieu">Matthieu</option>
+              <option value="Pierre">Pierre</option>
+              <option value="Alexandre">Alexandre</option>
+              <option value="Mailys">Mailys</option>
+              <option value="Unassigned">Office Pool / Reserve</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_status">Status</label>
+          <select id="assetStatusSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium">
+            <option value="in_use">🟢 In Use (ใช้งานอยู่)</option>
+            <option value="spare">🟡 Spare / Reserve (สำรอง)</option>
+            <option value="repair">🔴 In Repair / Maintenance (ส่งซ่อม)</option>
+          </select>
+        </div>
+
+        <!-- Progressive disclosure: More details -->
+        <button type="button" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('span').textContent = this.nextElementSibling.classList.contains('hidden') ? '▶ More details' : '▼ More details'"
+          class="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2 mb-1">
+          <span>▶ More details</span>
+        </button>
+        <div class="hidden space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_team">Team / Pôle</label>
+              <select id="assetTeamSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium">
+                <option value="Team GMB">Team GMB</option>
+                <option value="Team SEO">Team SEO</option>
+                <option value="Team Ad">Team Ad</option>
+                <option value="Pierre">Pierre</option>
+                <option value="Office Common">Office Common</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_room">Office Room</label>
+              <select id="assetRoomSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+                <option value="Common Office">🖥️ Common Office</option>
+                <option value="Private office">💼 Private office</option>
+                <option value="Common Space/Playground">🎯 Common Space/Playground</option>
+                <option value="Kitchen">☕ Kitchen</option>
+                <option value="Rooftop">🌇 Rooftop</option>
+                <option value="Exterieur">🌿 Exterieur</option>
+                <option value="Bathroom">🚿 Bathroom</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_serial">Serial Number (S/N)</label>
+              <input type="text" id="assetSerialInput" placeholder="e.g. C02K9820M3P1" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-mono">
+            </div>
+
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_cost">Purchase Cost (฿)</label>
+              <input type="number" id="assetCostInput" placeholder="e.g. 79900" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-mono">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_purchase_date">Purchase Date</label>
+              <input type="date" id="assetPurchaseDateInput" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            </div>
+
+            <div>
+              <label class="font-semibold text-purple-700 dark:text-purple-300 block mb-1" data-i18n="modal_device_warranty">Warranty Expiration Date</label>
+              <input type="date" id="assetWarrantyDateInput" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            </div>
+          </div>
+
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_photo">Photo / Link URL</label>
+            <input type="url" id="assetPhotoInput" placeholder="https://..." class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+          </div>
+
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_notes">Specs & Notes</label>
+            <textarea id="assetNotesInput" rows="2" placeholder="Charger type, battery health, accessories included..." class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <button id="assetDeleteBtn" onclick="deleteCurrentAsset()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1 hidden">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btn_delete">Delete</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button onclick="closeAssetModal()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-neutral-600 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition" data-i18n="btn_cancel">Cancel</button>
+          <button onclick="saveCurrentAsset()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_save_equipment">Save Equipment</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECURRING BILL MODAL -->
+  <div id="billModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between bg-rose-50 dark:bg-neutral-800/80">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">⚡</span>
+          <h3 id="billModalHeader" class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="modal_bill_header">Recurring Office Overhead Bill</h3>
+        </div>
+        <button onclick="closeBillModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div>
+          <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_name_en">Bill Name (English / FR)</label>
+          <input type="text" id="billNameInput" placeholder="e.g. PEA Electricity (Chiang Mai)" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2.5 text-gray-800 dark:text-gray-100 font-medium">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="font-semibold text-rose-600 block mb-1" data-i18n="modal_bill_amount">Monthly Amount (฿)</label>
+            <input type="number" id="billAmountInput" placeholder="14850" class="w-full bg-gray-50 dark:bg-neutral-900 border border-rose-300 dark:border-rose-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-mono font-bold">
+          </div>
+
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_due_day">Due Day of Month</label>
+            <input type="number" id="billDueDayInput" min="1" max="31" placeholder="10" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-mono font-bold">
+          </div>
+
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_category">Category</label>
+            <select id="billCategorySelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+              <option value="Rent">🏢 Rent (ค่าเช่า)</option>
+              <option value="Electricity">⚡ Electricity PEA (ค่าไฟ)</option>
+              <option value="Water">💧 Water MWA (ค่าน้ำ)</option>
+              <option value="Internet">📶 Internet & Telecom (เน็ต)</option>
+              <option value="Cleaning">🧹 Cleaning (แม่บ้าน)</option>
+              <option value="Other">📄 Other Overhead</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Progressive disclosure: More details -->
+        <button type="button" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('span').textContent = this.nextElementSibling.classList.contains('hidden') ? '▶ More details' : '▼ More details'"
+          class="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2 mb-1">
+          <span>▶ More details</span>
+        </button>
+        <div class="hidden space-y-3">
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_name_th">Name in Thai (ชื่อภาษาไทย)</label>
+            <input type="text" id="billNameThInput" placeholder="e.g. ค่าไฟฟ้า PEA การไฟฟ้าส่วนภูมิภาค" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2.5 text-gray-800 dark:text-gray-100">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_provider">Provider / Vendor Contact</label>
+              <input type="text" id="billProviderInput" placeholder="e.g. PEA Chiang Mai 1 / Landlord Agent" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            </div>
+
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_payment">Payment Method</label>
+              <input type="text" id="billPaymentMethodInput" placeholder="e.g. PEA Smart Plus App / QR PromptPay / BBL" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_ref">Customer / Reference / CA No.</label>
+              <input type="text" id="billRefNumberInput" placeholder="e.g. CA 02003884192 / Ref 5001" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-mono">
+            </div>
+
+            <div>
+              <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_room">Office Room</label>
+              <select id="billRoomSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100">
+                <option value="Common Office">🖥️ Common Office</option>
+                <option value="Private office">💼 Private office</option>
+                <option value="Common Space/Playground">🎯 Common Space/Playground</option>
+                <option value="Kitchen">☕ Kitchen</option>
+                <option value="Rooftop">🌇 Rooftop</option>
+                <option value="Exterieur">🌿 Exterieur</option>
+                <option value="Bathroom">🚿 Bathroom</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_bill_notes">Payment Instructions & Tax Notes</label>
+            <textarea id="billNotesInput" rows="2" placeholder="e-Tax invoice download link, receipt details, bank account..." class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <button id="billDeleteBtn" onclick="deleteCurrentBill()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center space-x-1 hidden">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btn_delete">Delete</span>
+        </button>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button onclick="closeBillModal()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-neutral-600 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition" data-i18n="btn_cancel">Cancel</button>
+          <button onclick="saveCurrentBill()" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium shadow-sm transition flex items-center space-x-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_save_bill">Save Bill</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KIBO'S INTERACTIVE WALKTHROUGH MODAL -->
+  <div id="kiboTutorialModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-in fade-in duration-200">
+    <div class="bg-white dark:bg-[#202020] border border-gray-200 dark:border-neutral-700 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <!-- Header -->
+      <div class="px-6 py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <span class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-lg">👑</span>
+          <div>
+            <h3 class="font-extrabold text-sm md:text-base leading-tight">Kibo's Office Manager Tour / ทัวร์ระบบสำหรับ Kibo</h3>
+            <p class="text-[11px] text-amber-100">Step <span id="tutorialStepNumber">1</span> of 6 • Bilingual Walkthrough</p>
+          </div>
+        </div>
+        <button onclick="closeKiboTutorialModal()" class="p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Step Progress Bar -->
+      <div class="w-full bg-gray-100 dark:bg-neutral-800 h-1.5 flex-shrink-0">
+        <div id="tutorialProgressBar" class="bg-amber-500 h-1.5 transition-all duration-300" style="width: 16.66%;"></div>
+      </div>
+
+      <!-- Step Content Area (Rendered via JS) -->
+      <div id="tutorialModalContent" class="p-6 overflow-y-auto space-y-4 flex-1 text-xs text-gray-700 dark:text-neutral-200">
+        <!-- Injected dynamically -->
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="px-6 py-3.5 bg-gray-50 dark:bg-neutral-800/80 border-t border-gray-200 dark:border-neutral-700 flex items-center justify-between flex-shrink-0">
+        <button id="tutorialPrevBtn" onclick="prevTutorialStep()" class="px-3.5 py-1.5 rounded-xl border border-gray-300 dark:border-neutral-600 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition flex items-center space-x-1.5">
+          <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+          <span>Previous / ย้อนกลับ</span>
+        </button>
+
+        <div class="flex items-center space-x-1.5" id="tutorialStepDots">
+          <!-- Dot indicators -->
+        </div>
+
+        <button id="tutorialNextBtn" onclick="nextTutorialStep()" class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition flex items-center space-x-1.5">
+          <span>Next / ถัดไป</span>
+          <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Photo Lightbox Modal -->
+  <div id="photoLightboxModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 hidden" onclick="closePhotoLightbox()">
+    <button class="absolute top-4 right-4 p-2 text-white/80 hover:text-white bg-white/10 rounded-full">
+      <i data-lucide="x" class="w-6 h-6"></i>
+    </button>
+    <div class="max-w-4xl max-h-[85vh] flex flex-col items-center space-y-3" onclick="event.stopPropagation()">
+      <img id="lightboxImage" src="" alt="Office attachment" class="max-h-[75vh] w-auto rounded-lg shadow-2xl object-contain border border-neutral-700">
+      <div id="lightboxCaption" class="text-xs text-gray-300 font-medium text-center"></div>
+    </div>
+  </div>
+
+  <!-- Quick Emoji Picker Popup -->
+  <div id="emojiPickerPopup" class="fixed z-50 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 p-2 rounded-xl shadow-xl hidden grid grid-cols-6 gap-1 text-xl"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
