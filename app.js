@@ -595,257 +595,101 @@ const defaultCMHandworkers = [
   }
 ];
 
-// --- 3. SAMPLE APPOINTMENTS (RDV) ---
+// --- 3. APPOINTMENTS (RDV) ---
 const defaultCMAppointments = [
   {
     id: "appt-001",
-    title: "AIS Fibre 1Gbps Bandwidth Upgrade Inspection",
-    date: "2026-10-06",
-    time: "10:00",
-    endTime: "11:00",
-    attendees: "Kibo, Jérémy",
-    contact: "AIS Fibre Support (1175)",
-    room: "Common Office",
-    notes: "Technician coming to test dedicated IP and replace Wi-Fi 6 mesh node for SEO & Ad desks."
-  },
-  {
-    id: "appt-002",
-    title: "Quarterly Office Lease & Expat Visa Review with Agent",
-    date: "2026-10-09",
-    time: "14:00",
-    endTime: "15:00",
-    attendees: "Pierre, Kibo",
-    contact: "Landlord / Visa Agent (081-882-9900)",
-    room: "Private office",
-    notes: "Review lease extension terms for Nimman hub and check upcoming TM30 / 90-day expat passports."
-  },
-  {
-    id: "appt-003",
-    title: "Team Operations & Gear Setup Sync (GMB / SEO / Ad)",
+    title: "Deep Cleaning Villa KK",
     date: "2026-10-07",
-    time: "11:30",
-    endTime: "12:30",
-    attendees: "All Team",
+    time: "09:00",
+    endTime: "19:00",
+    attendees: "Kibo",
     contact: "",
-    room: "Common Space/Playground",
-    notes: "Sync with Pierre, Jérémy, Matthieu, Marvin, Alexandre, Mailys and Kibo regarding office supplies and desk setup."
+    room: "Private office",
+    notes: "Cleaning Staff coming"
   }
 ];
 
-// --- 4. SAMPLE SUPPLIES WITH DISCOUNTS, QUANTITIES, ROOMS & BENEFICIARIES ---
+// --- 4. SUPPLIES WITH DISCOUNTS, QUANTITIES, ROOMS & BENEFICIARIES ---
 const defaultCMSupplies = [
   {
     id: "sup-001",
-    name: "Ergonomic Memory Foam Footrests & Lumbar Cushions",
-    photo: "https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?auto=format&fit=crop&w=600&q=80",
+    name: "Ergonomic Chairs",
+    photo: "",
     store: "Shopee",
     url: "https://shopee.co.th",
-    regularPrice: 850,
-    price: 620,
-    quantity: 4,
+    regularPrice: 11163,
+    price: 18195,
+    quantity: 1,
     room: "Common Office",
-    beneficiary: "Team SEO",
+    beneficiary: "Office Common",
     status: "ordered",
-    carrier: "Flash",
-    trackingNumber: "TH01928374652A",
-    orderDate: "2026-10-03",
-    estDelivery: "2026-10-05",
-    notes: "Requested by Jérémy for SEO workstations."
+    carrier: "ShopeeXpress",
+    trackingNumber: "",
+    orderDate: "2026-10-04",
+    estDelivery: "2026-10-10",
+    notes: ""
   },
   {
     id: "sup-002",
-    name: "CalDigit TS4 Thunderbolt 4 Docking Station & HDMI 2.1",
-    photo: "https://images.unsplash.com/photo-1593062096033-9a26b09da705?auto=format&fit=crop&w=600&q=80",
-    store: "Lazada",
-    url: "https://www.lazada.co.th",
-    regularPrice: 14500,
-    price: 12900,
-    quantity: 1,
-    room: "Private office",
-    beneficiary: "Pierre",
-    status: "in_stock",
-    carrier: "Kerry",
-    trackingNumber: "KER88291039",
-    orderDate: "2026-09-28",
-    estDelivery: "2026-09-30",
-    notes: "Main dock station for dual studio 4K displays."
-  },
-  {
-    id: "sup-003",
-    name: "Elgato Wave 3 USB Condenser Mic & Boom Arm (for Client Pitches)",
-    photo: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=600&q=80",
+    name: "Table Ergonomic",
+    photo: "",
     store: "Shopee",
     url: "https://shopee.co.th",
-    regularPrice: 6200,
-    price: 5490,
-    quantity: 2,
-    room: "Common Space/Playground",
-    beneficiary: "Team Ad",
+    regularPrice: 9200,
+    price: 2422,
+    quantity: 4,
+    room: "Common Office",
+    beneficiary: "Office Common",
     status: "ordered",
     carrier: "ShopeeXpress",
-    trackingNumber: "SPXTH9920182",
-    orderDate: "2026-10-04",
-    estDelivery: "2026-10-06",
-    notes: "For Marvin & Matthieu client ad campaign audits."
-  },
-  {
-    id: "sup-004",
-    name: "Doi Chang Arabica Espresso Whole Beans 1kg (5 Bags)",
-    photo: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=600&q=80",
-    store: "Local Roaster",
-    url: "https://www.doichangcoffee.co.th",
-    regularPrice: 550,
-    price: 480,
-    quantity: 5,
-    room: "Kitchen",
-    beneficiary: "Office Common",
-    status: "need_order",
-    carrier: "Flash",
     trackingNumber: "",
-    orderDate: "",
-    estDelivery: "",
-    notes: "Monthly office coffee bean supply for whole team."
-  },
-  {
-    id: "sup-005",
-    name: "Oatside Barista Oat Milk (1L x 12 Cartons Case)",
-    photo: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80",
-    store: "Makro",
-    url: "https://www.makro.pro",
-    regularPrice: 1100,
-    price: 990,
-    quantity: 2,
-    room: "Kitchen",
-    beneficiary: "Office Common",
-    status: "ordered",
-    carrier: "MakroDelivery",
-    trackingNumber: "MKR-998231",
     orderDate: "2026-10-04",
-    estDelivery: "2026-10-05",
-    notes: "Makro Pro delivery. Slot: Morning."
-  },
-  {
-    id: "sup-006",
-    name: "Heavy-Duty Cable Management Trays & Velcro Wire Organizers",
-    photo: "https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?auto=format&fit=crop&w=600&q=80",
-    store: "OfficeMate",
-    url: "https://www.officemate.co.th",
-    regularPrice: 650,
-    price: 490,
-    quantity: 6,
-    room: "Common Office",
-    beneficiary: "Team GMB",
-    status: "in_stock",
-    carrier: "Other",
-    trackingNumber: "",
-    orderDate: "",
-    estDelivery: "",
-    notes: "Clean desk setup for GMB team desks."
+    estDelivery: "2026-10-10",
+    notes: ""
   }
 ];
 
-// --- 5. SAMPLE TASKS WITH BENEFICIARIES & ASSIGNEES ---
+// --- 5. TASKS WITH BENEFICIARIES & ASSIGNEES ---
 const defaultCMTasks = [
   {
     id: "cm-001",
-    title: "Schedule AIS Fibre ONT Check for SEO & Ad Speed Upgrade",
-    icon: "📶",
-    status: "in_progress",
-    priority: "high",
-    team: "Team SEO",
-    assignee: "Kibo",
-    dueDate: "2026-10-06",
-    cost: 0,
-    contactId: "hw-ais",
-    contactName: "AIS Fibre Support",
-    contactPhone: "1175",
-    photos: [],
-    notes: "Meeting on Tuesday 10:00 with AIS tech. Jérémy and Kibo will verify ping and latency to cloud servers.",
-    checklist: [
-      { text: "Confirm RDV in Calendar with AIS technician", done: true },
-      { text: "Verify router credentials with Jérémy", done: true },
-      { text: "Run LAN ping test after fiber line inspection", done: false }
-    ]
-  },
-  {
-    id: "cm-002",
-    title: "Prepare TM30 Expat Reports & Lease Extension with Landlord Agent",
-    icon: "🏢",
-    status: "todo",
-    priority: "urgent",
-    team: "Pierre",
-    assignee: "Pierre",
-    dueDate: "2026-10-09",
-    cost: 0,
-    contactId: "hw-agent",
-    contactName: "Landlord & Visa Agent",
-    contactPhone: "081-882-9900",
-    photos: [],
-    notes: "Appointment scheduled for Friday 14:00 with Agent. Pierre and Kibo attending.",
-    checklist: [
-      { text: "Download lease contract draft", done: true },
-      { text: "Verify 90-day report dates", done: false },
-      { text: "Sign company authorization letter", done: false }
-    ]
-  },
-  {
-    id: "cm-003",
-    title: "Order New Ergonomic Chairs & Power Outlets for Team GMB",
+    title: "Chair Order",
     icon: "🪑",
-    status: "todo",
-    priority: "medium",
-    team: "Team GMB",
-    assignee: "Matthieu",
-    dueDate: "2026-10-12",
-    cost: 9800,
-    contactId: "",
-    contactName: "",
-    contactPhone: "",
-    photos: [],
-    notes: "Team GMB expanding setup in Common Office. Compare OfficeMate vs HomePro prices.",
-    checklist: [
-      { text: "Gather chair preferences from Matthieu, Marvin & Alexandre", done: true },
-      { text: "Apply Shopee voucher discount code", done: false }
-    ]
-  },
-  {
-    id: "cm-004",
-    title: "Pay Monthly PEA Electricity & True Backup SIM Bill",
-    icon: "⚡",
-    status: "todo",
+    status: "in_progress",
     priority: "high",
     team: "Office Common",
     assignee: "Kibo",
     dueDate: "2026-10-10",
-    cost: 16840,
-    contactId: "hw-true",
-    contactName: "True Enterprise Support",
-    contactPhone: "1242",
+    cost: 0,
+    contactId: "",
+    contactName: "",
+    contactPhone: "",
     photos: [],
-    notes: "PEA Ref 02003884192 + True SIM corporate package. Pay via mobile banking before the 10th.",
-    checklist: [
-      { text: "Verify physical meter reading", done: true },
-      { text: "Scan QR code on PEA Smart Plus app", done: false },
-      { text: "Archive e-Tax receipt for monthly accounting", done: false }
-    ]
+    notes: "",
+    checklist: []
+  },
+  {
+    id: "cm-002",
+    title: "Table shoppee coming today for Team GMB",
+    icon: "🪑",
+    status: "in_progress",
+    priority: "high",
+    team: "Team GMB",
+    assignee: "Mailys",
+    dueDate: "2026-10-08",
+    cost: 0,
+    contactId: "",
+    contactName: "",
+    contactPhone: "",
+    photos: [],
+    notes: "",
+    checklist: []
   }
 ];
 
-// --- 6. SAMPLE RENOVATIONS ---
-const defaultCMRenovations = [
-  {
-    id: "reno-001",
-    title: "Acoustic Slats & Soundproofing for Common Space/Playground",
-    status: "in_progress",
-    location: "Common Space/Playground",
-    budget: 18000,
-    contractor: "Chang Chai Decor (089-445-1234)",
-    photos: [
-      { url: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80", caption: "Acoustic Oak Slats" }
-    ],
-    notes: "For Team Ad client calls and video recordings."
-  }
-];
+// --- 6. RENOVATIONS ---
+const defaultCMRenovations = [];
 
 // --- 6.1 SAMPLE IT HARDWARE ASSETS REGISTRY ---
 const defaultCMAssets = [
