@@ -655,6 +655,7 @@ const defaultCMTasks = [
   {
     id: "cm-001",
     title: "Chair Order",
+    titleTh: "สั่งซื้อเก้าอี้",
     icon: "🪑",
     status: "in_progress",
     priority: "high",
@@ -672,6 +673,7 @@ const defaultCMTasks = [
   {
     id: "cm-002",
     title: "Table shoppee coming today for Team GMB",
+    titleTh: "โต๊ะจาก Shopee มาถึงวันนี้สำหรับ Team GMB",
     icon: "🪑",
     status: "in_progress",
     priority: "high",
@@ -689,6 +691,7 @@ const defaultCMTasks = [
   {
     id: "cm-003",
     title: "Prepare spreadsheet w Mailys & her girlfriend - Marketplace",
+    titleTh: "เตรียมสเปรดชีทกับ Mailys และแฟนสาว - Marketplace",
     icon: "📊",
     status: "todo",
     priority: "high",
@@ -706,6 +709,7 @@ const defaultCMTasks = [
   {
     id: "cm-004",
     title: "Order Office Cleaner - Deep Cleaning ONE TIME",
+    titleTh: "สั่งแม่บ้าน - ทำความสะอาดใหญ่ครั้งเดียว",
     icon: "🧹",
     status: "todo",
     priority: "urgent",
@@ -723,6 +727,7 @@ const defaultCMTasks = [
   {
     id: "cm-005",
     title: "Order Stuff: Marvin, Matthieu, Alex, Mailys",
+    titleTh: "สั่งของ: Marvin, Matthieu, Alex, Mailys",
     icon: "🖥️",
     status: "todo",
     priority: "urgent",
@@ -736,17 +741,18 @@ const defaultCMTasks = [
     photos: [],
     notes: "Desk + chair setup for each team member",
     checklist: [
-      { text: "Pierre", done: true },
-      { text: "Jérémy", done: true },
-      { text: "Matthieu: bureau + chaise", done: false },
-      { text: "Maïlys: bureau + chaise + ??", done: false },
-      { text: "Marvin: bureau + chaise + ecran", done: false },
-      { text: "Alexandre: bureau + chaise + ecran + clavier", done: false }
+      { text: "Pierre", textTh: "Pierre", done: true },
+      { text: "Jérémy", textTh: "Jérémy", done: true },
+      { text: "Matthieu: bureau + chaise", textTh: "Matthieu: โต๊ะ + เก้าอี้", done: false },
+      { text: "Maïlys: bureau + chaise + ??", textTh: "Maïlys: โต๊ะ + เก้าอี้ + ??", done: false },
+      { text: "Marvin: bureau + chaise + ecran", textTh: "Marvin: โต๊ะ + เก้าอี้ + จอ", done: false },
+      { text: "Alexandre: bureau + chaise + ecran + clavier", textTh: "Alexandre: โต๊ะ + เก้าอี้ + จอ + คีย์บอร์ด", done: false }
     ]
   },
   {
     id: "cm-006",
     title: "Go w agent to see what need renovation etc",
+    titleTh: "ไปกับเอเจนต์ดูว่าต้องปรับปรุงอะไรบ้าง",
     icon: "🏗️",
     status: "todo",
     priority: "high",
@@ -764,6 +770,7 @@ const defaultCMTasks = [
   {
     id: "cm-007",
     title: "Order Office Cleaner - Deep Cleaning WEEKLY",
+    titleTh: "สั่งแม่บ้าน - ทำความสะอาดใหญ่รายสัปดาห์",
     icon: "🧹",
     status: "todo",
     priority: "high",
@@ -781,6 +788,7 @@ const defaultCMTasks = [
   {
     id: "cm-008",
     title: "Water Heater Shower & Sink",
+    titleTh: "เครื่องทำน้ำอุ่นฝักบัวและอ่างล้างมือ",
     icon: "🚿",
     status: "todo",
     priority: "high",
@@ -794,13 +802,14 @@ const defaultCMTasks = [
     photos: [],
     notes: "",
     checklist: [
-      { text: "WATER HEATER SHOWER *1", done: false },
-      { text: "SINK * 1/2", done: false }
+      { text: "WATER HEATER SHOWER *1", textTh: "เครื่องทำน้ำอุ่นฝักบัว *1", done: false },
+      { text: "SINK * 1/2", textTh: "อ่างล้างมือ * 1/2", done: false }
     ]
   },
   {
     id: "cm-009",
     title: "Electrician & Handyman",
+    titleTh: "ช่างไฟฟ้าและช่างซ่อม",
     icon: "🔧",
     status: "todo",
     priority: "high",
@@ -814,16 +823,17 @@ const defaultCMTasks = [
     photos: [],
     notes: "",
     checklist: [
-      { text: "ELECTRICIAN", done: false },
-      { text: "HANDYMAN FOR DESKS & CHAIR INSTALLATION ETC", done: false },
-      { text: "CHECK AC", done: false },
-      { text: "CHECK LIGHTS", done: false },
-      { text: "CHECK WALL OUTLET (Prise murale)", done: false }
+      { text: "ELECTRICIAN", textTh: "ช่างไฟฟ้า", done: false },
+      { text: "HANDYMAN FOR DESKS & CHAIR INSTALLATION ETC", textTh: "ช่างติดตั้งโต๊ะและเก้าอี้", done: false },
+      { text: "CHECK AC", textTh: "ตรวจแอร์", done: false },
+      { text: "CHECK LIGHTS", textTh: "ตรวจไฟ", done: false },
+      { text: "CHECK WALL OUTLET (Prise murale)", textTh: "ตรวจปลั๊กไฟผนัง", done: false }
     ]
   },
   {
     id: "cm-010",
     title: "Book Phrew Monk Blessing Ceremony",
+    titleTh: "จองพระสงฆ์ทำพิธีเจิมสำนักงาน",
     icon: "🙏",
     status: "todo",
     priority: "medium",
@@ -841,6 +851,7 @@ const defaultCMTasks = [
   {
     id: "cm-011",
     title: "Buy Kitchen & Bathroom Supplies",
+    titleTh: "ซื้อของใช้ครัวและห้องน้ำ",
     icon: "🍽️",
     status: "todo",
     priority: "high",
@@ -854,16 +865,17 @@ const defaultCMTasks = [
     photos: [],
     notes: "",
     checklist: [
-      { text: "Spoons, glasses, couverts, Plates, mugs etc", done: false },
-      { text: "BINS", done: false },
-      { text: "TOILET PAPER", done: false },
-      { text: "HAND SOAP", done: false },
-      { text: "TOWELS", done: false }
+      { text: "Spoons, glasses, couverts, Plates, mugs etc", textTh: "ช้อน, แก้ว, มีดส้อม, จาน, แก้วมัค ฯลฯ", done: false },
+      { text: "BINS", textTh: "ถังขยะ", done: false },
+      { text: "TOILET PAPER", textTh: "กระดาษชำระ", done: false },
+      { text: "HAND SOAP", textTh: "สบู่ล้างมือ", done: false },
+      { text: "TOWELS", textTh: "ผ้าเช็ดตัว", done: false }
     ]
   },
   {
     id: "cm-012",
     title: "Curtains - where and what?",
+    titleTh: "ผ้าม่าน - ห้องไหนและแบบไหน?",
     icon: "🪟",
     status: "todo",
     priority: "medium",
@@ -881,6 +893,7 @@ const defaultCMTasks = [
   {
     id: "cm-013",
     title: "LATER: Order Office Outside Cleaning",
+    titleTh: "ทีหลัง: สั่งทำความสะอาดภายนอกสำนักงาน",
     icon: "🌿",
     status: "todo",
     priority: "low",
@@ -898,6 +911,7 @@ const defaultCMTasks = [
   {
     id: "cm-014",
     title: "LATER: Kitchen Appliances",
+    titleTh: "ทีหลัง: เครื่องใช้ไฟฟ้าในครัว",
     icon: "🍳",
     status: "todo",
     priority: "low",
@@ -911,13 +925,14 @@ const defaultCMTasks = [
     photos: [],
     notes: "",
     checklist: [
-      { text: "FRIDGE", done: false },
-      { text: "Microwave", done: false }
+      { text: "FRIDGE", textTh: "ตู้เย็น", done: false },
+      { text: "Microwave", textTh: "ไมโครเวฟ", done: false }
     ]
   },
   {
     id: "cm-015",
     title: "LATER: Office Comfort & Fun",
+    titleTh: "ทีหลัง: ความสะดวกสบายและสนุกในออฟฟิศ",
     icon: "🛋️",
     status: "todo",
     priority: "low",
@@ -931,15 +946,16 @@ const defaultCMTasks = [
     photos: [],
     notes: "",
     checklist: [
-      { text: "Canapé / Couch", done: false },
-      { text: "Extra lights?", done: false },
-      { text: "Meme jeu que dinkys BBQ in office garden", done: false },
-      { text: "Petanque etc", done: false }
+      { text: "Canapé / Couch", textTh: "โซฟา", done: false },
+      { text: "Extra lights?", textTh: "ไฟเพิ่ม?", done: false },
+      { text: "Meme jeu que dinkys BBQ in office garden", textTh: "เกมเหมือน dinkys บาร์บีคิวในสวนออฟฟิศ", done: false },
+      { text: "Petanque etc", textTh: "เปตอง ฯลฯ", done: false }
     ]
   },
   {
     id: "cm-016",
     title: "LATER: BOI - Big branding name in front of building",
+    titleTh: "ทีหลัง: BOI - ป้ายชื่อบริษัทใหญ่หน้าตึก",
     icon: "🏢",
     status: "todo",
     priority: "low",
@@ -1735,7 +1751,8 @@ function getFilteredTasks() {
     if (memberFilter !== 'ALL' && task.assignee !== memberFilter) return false;
     if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) return false;
     if (query) {
-      const matchTitle = (task.title || '').toLowerCase().includes(query);
+      const displayTitle = (currentLang === 'th' && task.titleTh) ? task.titleTh : task.title;
+      const matchTitle = (displayTitle || '').toLowerCase().includes(query) || (task.title || '').toLowerCase().includes(query);
       const matchNotes = (task.notes || '').toLowerCase().includes(query);
       const matchAssignee = (task.assignee || '').toLowerCase().includes(query);
       const matchTeam = (task.team || '').toLowerCase().includes(query);
@@ -1849,7 +1866,8 @@ function handleDrop(e, newStatus) {
     renderCurrentView();
     if (typeof showNotification === 'function') {
       const statusLabels = { todo: 'To Do', in_progress: 'In Progress', waiting: 'Waiting', done: 'Done' };
-      showNotification('Task Moved', `"${task.title.substring(0, 40)}..." → ${statusLabels[newStatus] || newStatus}`);
+      const displayTitle = (currentLang === 'th' && task.titleTh) ? task.titleTh : task.title;
+      showNotification('Task Moved', `"${displayTitle.substring(0, 40)}..." → ${statusLabels[newStatus] || newStatus}`);
     }
   }
 }
@@ -1930,7 +1948,7 @@ function renderKanbanCard(task) {
       <!-- Title & Icon -->
       <div class="font-medium text-xs leading-snug text-gray-900 dark:text-gray-100 flex items-start space-x-1.5">
         <span class="text-sm select-none">${task.icon || '📋'}</span>
-        <span class="flex-1">${escapeHtml(task.title)}</span>
+        <span class="flex-1">${escapeHtml((currentLang === 'th' && task.titleTh) ? task.titleTh : task.title)}</span>
       </div>
 
       <!-- Quick Call Button if Handworker / Contact Linked -->
@@ -1983,7 +2001,7 @@ function renderTable() {
         <td class="py-2.5 px-4 font-medium text-gray-900 dark:text-gray-100">
           <div class="flex items-center space-x-2">
             <span>${task.icon || '📋'}</span>
-            <span class="hover:underline">${escapeHtml(task.title)}</span>
+            <span class="hover:underline">${escapeHtml((currentLang === 'th' && task.titleTh) ? task.titleTh : task.title)}</span>
             ${isOverdue ? `<span class="bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${t('overdue_label')}</span>` : ''}
           </div>
         </td>
@@ -2760,7 +2778,7 @@ function renderModalChecklist(items) {
   container.innerHTML = items.map((item, idx) => `
     <div class="flex items-center space-x-2 text-xs bg-white dark:bg-neutral-800 p-1.5 rounded-lg border border-gray-200 dark:border-neutral-700">
       <input type="checkbox" ${item.done ? 'checked' : ''} class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer checklist-check-item">
-      <input type="text" value="${item.text.replace(/"/g, '&quot;')}" placeholder="Checklist step..." class="flex-1 bg-transparent border-0 focus:outline-none dark:text-gray-200 checklist-text-item">
+      <input type="text" value="${((currentLang === 'th' && item.textTh) ? item.textTh : item.text).replace(/"/g, '&quot;')}" placeholder="Checklist step..." class="flex-1 bg-transparent border-0 focus:outline-none dark:text-gray-200 checklist-text-item">
       <button type="button" onclick="this.parentElement.remove()" class="text-gray-400 hover:text-rose-500 p-1">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
       </button>
@@ -3366,7 +3384,7 @@ function renderBudgetDashboard() {
     const tm = t.team || 'Office Common';
     const cost = parseFloat(t.cost) || 0;
     if (cost > 0 && teamData[tm]) {
-      teamData[tm].tasks.push({ name: t.title, cost });
+      teamData[tm].tasks.push({ name: (currentLang === 'th' && t.titleTh) ? t.titleTh : t.title, cost });
       teamData[tm].total += cost;
     }
   });
