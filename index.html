@@ -123,6 +123,22 @@
       background: rgba(150, 150, 150, 0.2);
       border-radius: 4px;
     }
+    .calc-btn {
+      padding: 0.5rem; text-align: center; font-size: 0.875rem; font-weight: 600;
+      border-radius: 0.5rem; cursor: pointer; transition: all 0.1s;
+      background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;
+    }
+    .calc-btn:hover { background: #e5e7eb; }
+    .calc-btn:active { transform: scale(0.95); }
+    .calc-op { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .calc-op:hover { background: #fde68a; }
+    .calc-eq { background: #f59e0b; color: white; border-color: #d97706; }
+    .calc-eq:hover { background: #d97706; }
+    .dark .calc-btn { background: #262626; color: #e5e5e5; border-color: #404040; }
+    .dark .calc-btn:hover { background: #404040; }
+    .dark .calc-op { background: #451a03; color: #fbbf24; border-color: #78350f; }
+    .dark .calc-op:hover { background: #78350f; }
+    .dark .calc-eq { background: #d97706; }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-[#191919] text-[#37352f] dark:text-[#ebebeb] h-full flex flex-col font-sans antialiased selection:bg-amber-100 dark:selection:bg-amber-900">
@@ -236,6 +252,49 @@
       <div id="eurThbWidget" class="hidden items-center space-x-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-lg text-[11px] font-mono">
         <span>💱</span>
         <span id="eurThbRate">--</span>
+      </div>
+
+      <!-- Calculator Widget -->
+      <div class="relative">
+        <button id="calcToggleBtn" onclick="toggleCalcWidget()" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition" title="Calculator / เครื่องคิดเลข">
+          <i data-lucide="calculator" class="w-4 h-4"></i>
+        </button>
+        <div id="calcWidget" class="absolute right-0 mt-2 w-72 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl shadow-2xl p-4 hidden z-50">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-bold text-sm text-gray-800 dark:text-white flex items-center space-x-1.5">
+              <i data-lucide="calculator" class="w-4 h-4 text-amber-500"></i>
+              <span>Calculator</span>
+            </span>
+            <button onclick="clearCalc()" class="text-[10px] text-gray-400 hover:text-red-500 px-2 py-0.5 rounded border border-gray-200 dark:border-neutral-600">C</button>
+          </div>
+          <input id="calcDisplay" type="text" readonly class="w-full bg-gray-100 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg px-3 py-2 text-right text-lg font-mono text-gray-900 dark:text-white mb-2" value="0">
+          <div class="grid grid-cols-4 gap-1.5">
+            <button onclick="calcInput('7')" class="calc-btn">7</button>
+            <button onclick="calcInput('8')" class="calc-btn">8</button>
+            <button onclick="calcInput('9')" class="calc-btn">9</button>
+            <button onclick="calcInput('/')" class="calc-btn calc-op">÷</button>
+            <button onclick="calcInput('4')" class="calc-btn">4</button>
+            <button onclick="calcInput('5')" class="calc-btn">5</button>
+            <button onclick="calcInput('6')" class="calc-btn">6</button>
+            <button onclick="calcInput('*')" class="calc-btn calc-op">×</button>
+            <button onclick="calcInput('1')" class="calc-btn">1</button>
+            <button onclick="calcInput('2')" class="calc-btn">2</button>
+            <button onclick="calcInput('3')" class="calc-btn">3</button>
+            <button onclick="calcInput('-')" class="calc-btn calc-op">−</button>
+            <button onclick="calcInput('0')" class="calc-btn">0</button>
+            <button onclick="calcInput('.')" class="calc-btn">.</button>
+            <button onclick="calcResult()" class="calc-btn calc-eq">=</button>
+            <button onclick="calcInput('+')" class="calc-btn calc-op">+</button>
+          </div>
+          <div class="mt-2 pt-2 border-t border-gray-100 dark:border-neutral-700">
+            <div class="flex items-center space-x-1.5 text-[11px]">
+              <span class="text-gray-400">EUR→THB</span>
+              <input id="calcEurInput" type="number" placeholder="€" class="w-16 bg-gray-100 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded px-2 py-1 text-xs text-right" oninput="convertEurThb()">
+              <span class="text-gray-400">=</span>
+              <span id="calcThbResult" class="font-mono font-semibold text-emerald-600 dark:text-emerald-400">฿ --</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Language Switcher Toggle -->
@@ -553,6 +612,7 @@
           <div class="relative">
             <select id="teamFilterSelect" onchange="renderCurrentView()" class="bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
               <option value="ALL" data-i18n="filter_all_teams">All Teams / Beneficiaries</option>
+              <option value="General Team">General Team</option>
               <option value="Team GMB">Team GMB</option>
               <option value="Team SEO">Team SEO</option>
               <option value="Team Ad">Team Ad</option>
@@ -682,6 +742,7 @@
               <!-- Filter by Beneficiary -->
               <select id="supplyBeneficiaryFilterSelect" onchange="renderSuppliesCatalog()" class="bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-2.5 py-1 text-xs">
                 <option value="ALL" data-i18n="beneficiary_all">All Teams / Beneficiaries</option>
+                <option value="General Team">General Team</option>
                 <option value="Team GMB">Team GMB</option>
                 <option value="Team SEO">Team SEO</option>
                 <option value="Team Ad">Team Ad</option>
@@ -1726,6 +1787,7 @@
               <span>Team</span>
             </span>
             <select id="modalTeamSelect" class="flex-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md py-1.5 px-2 text-gray-800 dark:text-gray-200 font-medium">
+              <option value="General Team">General Team</option>
               <option value="Team GMB">Team GMB</option>
               <option value="Team SEO">Team SEO</option>
               <option value="Team Ad">Team Ad</option>
@@ -1906,6 +1968,7 @@
           <div>
             <label class="font-semibold text-amber-900 dark:text-amber-300 block mb-1" data-i18n="lbl_supply_beneficiary">Necessary for Team / Person</label>
             <select id="supplyBeneficiarySelect" class="w-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium">
+              <option value="General Team">General Team</option>
               <option value="Team GMB">Team GMB</option>
               <option value="Team SEO">Team SEO</option>
               <option value="Team Ad">Team Ad</option>
@@ -2297,6 +2360,7 @@
             <div>
               <label class="font-semibold text-gray-700 dark:text-gray-300 block mb-1" data-i18n="modal_device_team">Team / Pôle</label>
               <select id="assetTeamSelect" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium">
+                <option value="General Team">General Team</option>
                 <option value="Team GMB">Team GMB</option>
                 <option value="Team SEO">Team SEO</option>
                 <option value="Team Ad">Team Ad</option>

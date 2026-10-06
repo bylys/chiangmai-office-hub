@@ -1375,6 +1375,7 @@ function renderSidebarFilters() {
   // Teams filter
   const teamContainer = document.getElementById('teamFilterList');
   const teams = [
+    { id: 'General Team', icon: '🌐', color: 'text-cyan-500' },
     { id: 'Team GMB', icon: '📍', color: 'text-blue-500' },
     { id: 'Team SEO', icon: '🔍', color: 'text-emerald-500' },
     { id: 'Team Ad', icon: '📊', color: 'text-purple-500' },
@@ -3219,6 +3220,7 @@ function renderBudgetDashboard() {
   if (!container) return;
 
   const teams = [
+    { id: 'General Team', color: 'cyan', barColor: 'bg-cyan-500', textColor: 'text-cyan-600', borderColor: 'border-cyan-200 dark:border-cyan-900', bgLight: 'bg-cyan-50 dark:bg-cyan-950/40' },
     { id: 'Team GMB', color: 'blue', barColor: 'bg-blue-500', textColor: 'text-blue-600', borderColor: 'border-blue-200 dark:border-blue-900', bgLight: 'bg-blue-50 dark:bg-blue-950/40' },
     { id: 'Team SEO', color: 'emerald', barColor: 'bg-emerald-500', textColor: 'text-emerald-600', borderColor: 'border-emerald-200 dark:border-emerald-900', bgLight: 'bg-emerald-50 dark:bg-emerald-950/40' },
     { id: 'Team Ad', color: 'purple', barColor: 'bg-purple-500', textColor: 'text-purple-600', borderColor: 'border-purple-200 dark:border-purple-900', bgLight: 'bg-purple-50 dark:bg-purple-950/40' },
@@ -4389,3 +4391,68 @@ function renderTutorialStep(stepIndex) {
 
   lucide.createIcons();
 }
+
+// --- CALCULATOR WIDGET ---
+let calcExpression = '';
+let calcNewNumber = true;
+
+function toggleCalcWidget() {
+  const w = document.getElementById('calcWidget');
+  if (w) w.classList.toggle('hidden');
+}
+
+function calcInput(val) {
+  const display = document.getElementById('calcDisplay');
+  if ('0123456789.'.includes(val)) {
+    if (calcNewNumber) { calcExpression += val; calcNewNumber = false; }
+    else { calcExpression += val; }
+  } else {
+    calcExpression += ' ' + val + ' ';
+    calcNewNumber = true;
+  }
+  display.value = calcExpression.trim();
+}
+
+function calcResult() {
+  const display = document.getElementById('calcDisplay');
+  try {
+    const result = Function('"use strict"; return (' + calcExpression + ')')();
+    display.value = parseFloat(result.toFixed(8));
+    calcExpression = String(display.value);
+    calcNewNumber = true;
+  } catch (e) {
+    display.value = 'Error';
+    calcExpression = '';
+    calcNewNumber = true;
+  }
+}
+
+function clearCalc() {
+  calcExpression = '';
+  calcNewNumber = true;
+  const display = document.getElementById('calcDisplay');
+  if (display) display.value = '0';
+}
+
+function convertEurThb() {
+  const input = document.getElementById('calcEurInput');
+  const result = document.getElementById('calcThbResult');
+  const rateEl = document.getElementById('eurThbRate');
+  if (!input || !result || !rateEl) return;
+  const eur = parseFloat(input.value);
+  const rateText = rateEl.textContent;
+  const rate = parseFloat(rateText.replace('EUR/THB: ₿', '').replace('฿', ''));
+  if (!isNaN(eur) && !isNaN(rate) && rate > 0) {
+    result.textContent = '฿ ' + (eur * rate).toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  } else {
+    result.textContent = '฿ --';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  const w = document.getElementById('calcWidget');
+  const btn = document.getElementById('calcToggleBtn');
+  if (w && !w.contains(e.target) && !btn.contains(e.target)) {
+    w.classList.add('hidden');
+  }
+});
