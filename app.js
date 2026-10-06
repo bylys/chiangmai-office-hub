@@ -1338,19 +1338,19 @@ function escapeHtml(str) {
 }
 
 function initData() {
-  const sTasks = localStorage.getItem('cm_office_tasks_v3');
+  const sTasks = localStorage.getItem('cm_office_tasks_v4');
   tasks = sTasks ? JSON.parse(sTasks) : [...defaultCMTasks];
 
-  const sSupplies = localStorage.getItem('cm_office_supplies_v3');
+  const sSupplies = localStorage.getItem('cm_office_supplies_v4');
   supplies = sSupplies ? JSON.parse(sSupplies) : [...defaultCMSupplies];
 
-  const sHw = localStorage.getItem('cm_office_handworkers_v3');
+  const sHw = localStorage.getItem('cm_office_handworkers_v4');
   handworkers = sHw ? JSON.parse(sHw) : [...defaultCMHandworkers];
 
-  const sAppt = localStorage.getItem('cm_office_appointments_v3');
+  const sAppt = localStorage.getItem('cm_office_appointments_v4');
   appointments = sAppt ? JSON.parse(sAppt) : [...defaultCMAppointments];
 
-  const sReno = localStorage.getItem('cm_office_renovations_v3');
+  const sReno = localStorage.getItem('cm_office_renovations_v4');
   renovations = sReno ? JSON.parse(sReno) : [...defaultCMRenovations];
 
   const sAssets = localStorage.getItem('cm_office_assets_v1');
@@ -1363,11 +1363,11 @@ function initData() {
 }
 
 function saveAllStorage() {
-  localStorage.setItem('cm_office_tasks_v3', JSON.stringify(tasks));
-  localStorage.setItem('cm_office_supplies_v3', JSON.stringify(supplies));
-  localStorage.setItem('cm_office_handworkers_v3', JSON.stringify(handworkers));
-  localStorage.setItem('cm_office_appointments_v3', JSON.stringify(appointments));
-  localStorage.setItem('cm_office_renovations_v3', JSON.stringify(renovations));
+  localStorage.setItem('cm_office_tasks_v4', JSON.stringify(tasks));
+  localStorage.setItem('cm_office_supplies_v4', JSON.stringify(supplies));
+  localStorage.setItem('cm_office_handworkers_v4', JSON.stringify(handworkers));
+  localStorage.setItem('cm_office_appointments_v4', JSON.stringify(appointments));
+  localStorage.setItem('cm_office_renovations_v4', JSON.stringify(renovations));
   localStorage.setItem('cm_office_assets_v1', JSON.stringify(assets));
   localStorage.setItem('cm_office_bills_v1', JSON.stringify(recurringBills));
   renderBadges();
