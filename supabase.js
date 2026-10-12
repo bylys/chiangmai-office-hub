@@ -190,16 +190,13 @@ let unreadCount = 0;
 const TEAM_MEMBERS = ['Pierre', 'Jérémy', 'Matthieu', 'Marvin', 'Alexandre', 'Mailys', 'Kibo'];
 
 async function initChat() {
-  const dmChannelsDef = TEAM_MEMBERS.map(name => ({
-    id: 'dm-' + name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''),
-    name: name,
-    name_th: name,
-    type: 'dm'
-  }));
   try {
     const { data, error } = await sb.from('channels').select('*');
     if (error) throw error;
-    chatChannels = (data || []).concat(dmChannelsDef);
+    chatChannels = (data || []).map(ch => ({
+      ...ch,
+      type: ch.id.startsWith('dm-') ? 'dm' : 'group'
+    }));
   } catch (e) {
     console.warn('[Chat] Channels not available yet, using defaults');
     chatChannels = [
@@ -207,7 +204,10 @@ async function initChat() {
       { id: 'team-gmb', name: 'Team GMB', name_th: 'ทีม GMB', type: 'group' },
       { id: 'team-seo', name: 'Team SEO', name_th: 'ทีม SEO', type: 'group' },
       { id: 'team-ad', name: 'Team Ad', name_th: 'ทีม Ad', type: 'group' },
-    ].concat(dmChannelsDef);
+    ].concat(TEAM_MEMBERS.map(name => ({
+      id: 'dm-' + name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''),
+      name: name, name_th: name, type: 'dm'
+    })));
   }
   if (currentChatUser) {
     await loadChatMessages(currentChannel);
