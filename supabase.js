@@ -190,10 +190,16 @@ let unreadCount = 0;
 const TEAM_MEMBERS = ['Pierre', 'Jérémy', 'Matthieu', 'Marvin', 'Alexandre', 'Mailys', 'Kibo'];
 
 async function initChat() {
+  const dmChannelsDef = TEAM_MEMBERS.map(name => ({
+    id: 'dm-' + name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''),
+    name: name,
+    name_th: name,
+    type: 'dm'
+  }));
   try {
     const { data, error } = await sb.from('channels').select('*');
     if (error) throw error;
-    chatChannels = data || [];
+    chatChannels = (data || []).concat(dmChannelsDef);
   } catch (e) {
     console.warn('[Chat] Channels not available yet, using defaults');
     chatChannels = [
@@ -201,7 +207,7 @@ async function initChat() {
       { id: 'team-gmb', name: 'Team GMB', name_th: 'ทีม GMB', type: 'group' },
       { id: 'team-seo', name: 'Team SEO', name_th: 'ทีม SEO', type: 'group' },
       { id: 'team-ad', name: 'Team Ad', name_th: 'ทีม Ad', type: 'group' },
-    ];
+    ].concat(dmChannelsDef);
   }
   if (currentChatUser) {
     await loadChatMessages(currentChannel);
@@ -317,15 +323,16 @@ function renderChat() {
     return;
   }
 
-  const channelTabs = chatChannels.map(ch => {
+  const groupChannels = chatChannels.filter(ch => ch.type !== 'dm');
+  const dmChannels = chatChannels.filter(ch => ch.type === 'dm');
+  const makeTab = (ch) => {
     const active = ch.id === currentChannel;
     const label = currentLang === 'th' && ch.name_th ? ch.name_th : ch.name;
     return `<button onclick="loadChatMessages('${ch.id}')"
       class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
         active ? 'bg-amber-500 text-white' : 'bg-gray-200 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-neutral-600'
       }">${escapeHtml(label)}</button>`;
-  }).join('');
-
+  };
   const header = `
     <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800">
       <div class="flex items-center space-x-2">
@@ -334,8 +341,14 @@ function renderChat() {
       </div>
       <button onclick="toggleChat()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1">✕</button>
     </div>
-    <div class="flex space-x-1.5 px-3 py-2 overflow-x-auto border-b border-gray-200 dark:border-neutral-700">
-      ${channelTabs}
+    <div class="px-3 py-2 border-b border-gray-200 dark:border-neutral-700 space-y-1.5">
+      <div class="flex space-x-1.5 overflow-x-auto">
+        ${groupChannels.map(makeTab).join('')}
+      </div>
+      ${dmChannels.length ? `<div class="flex space-x-1 overflow-x-auto">
+        <span class="text-[9px] text-gray-400 dark:text-neutral-500 self-center pr-1 shrink-0">DM</span>
+        ${dmChannels.map(makeTab).join('')}
+      </div>` : ''}
     </div>
   `;
 
@@ -356,6 +369,9 @@ function renderChat() {
     <div id="chatMessagesContainer" class="flex-1 overflow-y-auto px-3 py-2 space-y-2" style="min-height:0"></div>
     ${inputBar}
   `;
+
+  const activeTab = panel.querySelector('button.bg-amber-500');
+  if (activeTab) activeTab.scrollIntoView({ block: 'nearest', inline: 'center' });
 
   renderChatMessages();
 }

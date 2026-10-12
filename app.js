@@ -147,6 +147,7 @@ const translations = {
     btn_delete: "Delete",
     btn_cancel: "Cancel",
     btn_save: "Save Changes",
+    btn_save_priority: "Update Priority",
     btn_call: "Call",
     add_card: "+ New Card",
     // Routine
@@ -431,6 +432,7 @@ const translations = {
     btn_delete: "ลบรายการ",
     btn_cancel: "ยกเลิก",
     btn_save: "บันทึกข้อมูล",
+    btn_save_priority: "อัปเดตความสำคัญ",
     btn_call: "โทรทันที",
     add_card: "+ เพิ่มการ์ด",
     // Routine
@@ -1821,19 +1823,22 @@ function getFilteredTasks() {
 function switchView(viewName) {
   activeView = viewName;
   document.querySelectorAll('.view-nav-btn').forEach(btn => {
-    if (btn.getAttribute('data-view') === viewName) {
+    const bv = btn.getAttribute('data-view');
+    if (bv === viewName) {
       btn.className = "view-nav-btn active w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200";
+    } else if (bv === 'team_guide' || bv === 'tutorial') {
+      btn.className = btn.className.replace(/\bactive\b/, '').trim();
     } else {
       btn.className = "view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition";
     }
   });
 
-  ['viewKanban', 'viewTable', 'viewSupplies', 'viewCalendar', 'viewHandworkers', 'viewRenovations', 'viewItInventory', 'viewBudget', 'viewRecurringBills', 'viewWiki', 'viewTutorial'].forEach(id => {
+  ['viewKanban', 'viewTable', 'viewSupplies', 'viewCalendar', 'viewHandworkers', 'viewRenovations', 'viewItInventory', 'viewBudget', 'viewRecurringBills', 'viewWiki', 'viewTeamGuide', 'viewTutorial'].forEach(id => {
     document.getElementById(id)?.classList.add('hidden');
   });
 
   const filterBar = document.getElementById('filterBarContainer');
-  if (viewName === 'supplies' || viewName === 'calendar' || viewName === 'handworkers' || viewName === 'renovations' || viewName === 'it_inventory' || viewName === 'budget' || viewName === 'recurring_bills' || viewName === 'wiki' || viewName === 'tutorial') {
+  if (viewName === 'supplies' || viewName === 'calendar' || viewName === 'handworkers' || viewName === 'renovations' || viewName === 'it_inventory' || viewName === 'budget' || viewName === 'recurring_bills' || viewName === 'wiki' || viewName === 'team_guide' || viewName === 'tutorial') {
     filterBar.classList.add('hidden');
   } else {
     filterBar.classList.remove('hidden');
@@ -1849,6 +1854,7 @@ function switchView(viewName) {
   if (viewName === 'budget') document.getElementById('viewBudget').classList.remove('hidden');
   if (viewName === 'recurring_bills') document.getElementById('viewRecurringBills').classList.remove('hidden');
   if (viewName === 'wiki') document.getElementById('viewWiki').classList.remove('hidden');
+  if (viewName === 'team_guide') document.getElementById('viewTeamGuide').classList.remove('hidden');
   if (viewName === 'tutorial') document.getElementById('viewTutorial').classList.remove('hidden');
 
   const vc = document.getElementById('viewContainer');
@@ -2799,8 +2805,13 @@ function openTaskModal(taskId = null, defaultStatus = 'todo') {
   }
 
   modal.classList.remove('hidden');
+  const saveBtn = document.getElementById('modalSaveBtn');
   if (!isAdmin()) {
     modal.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; el.style.opacity = '0.7'; });
+    const prioSelect = document.getElementById('modalPrioritySelect');
+    prioSelect.disabled = false;
+    prioSelect.style.opacity = '';
+    if (saveBtn) saveBtn.querySelector('span').textContent = t('btn_save_priority') || 'Update Priority';
   } else {
     modal.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = false; el.style.opacity = ''; });
     document.getElementById('modalTitleInput').focus();
@@ -2888,6 +2899,17 @@ function addChecklistItem() {
 }
 
 function saveCurrentTask() {
+  if (!isAdmin() && editingTaskId) {
+    const idx = tasks.findIndex(t => t.id === editingTaskId);
+    if (idx !== -1) {
+      tasks[idx].priority = document.getElementById('modalPrioritySelect').value;
+      saveAllStorage();
+      closeTaskModal();
+      renderCurrentView();
+    }
+    return;
+  }
+
   const title = document.getElementById('modalTitleInput').value.trim();
   if (!title) {
     alert('Please provide task title.');
