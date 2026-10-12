@@ -186,6 +186,7 @@ let currentChannel = 'general';
 let currentChatUser = localStorage.getItem('cm_chat_user') || '';
 let chatOpen = false;
 let unreadCount = 0;
+let unreadPerChannel = {};
 
 const TEAM_MEMBERS = ['Pierre', 'Jérémy', 'Matthieu', 'Marvin', 'Alexandre', 'Mailys', 'Kibo'];
 
@@ -219,6 +220,11 @@ async function initChat() {
 
 async function loadChatMessages(channelId) {
   currentChannel = channelId;
+  if (unreadPerChannel[channelId]) {
+    unreadCount = Math.max(0, unreadCount - unreadPerChannel[channelId]);
+    delete unreadPerChannel[channelId];
+    updateChatBadge();
+  }
   try {
     const { data, error } = await sb.from('messages')
       .select('*')
@@ -263,12 +269,23 @@ function handleNewChatMessage(msg) {
   if (msg.sender !== currentChatUser) {
     if (!chatOpen || msg.channel !== currentChannel) {
       unreadCount++;
+      unreadPerChannel[msg.channel] = (unreadPerChannel[msg.channel] || 0) + 1;
       updateChatBadge();
+      updateChannelBadges();
     }
     if (!chatOpen) {
       showNotification('💬 ' + msg.sender, msg.content.substring(0, 60));
     }
   }
+}
+
+function updateChannelBadges() {
+  document.querySelectorAll('[data-channel-badge]').forEach(badge => {
+    const ch = badge.dataset.channelBadge;
+    const count = unreadPerChannel[ch] || 0;
+    badge.textContent = count > 9 ? '9+' : count;
+    badge.classList.toggle('hidden', count === 0);
+  });
 }
 
 function setChatUser(name) {
@@ -328,10 +345,12 @@ function renderChat() {
 
   const makeTab = (id, label) => {
     const active = id === currentChannel;
+    const count = unreadPerChannel[id] || 0;
+    const badge = `<span data-channel-badge="${id}" class="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none ${count ? '' : 'hidden'}">${count > 9 ? '9+' : count}</span>`;
     return `<button onclick="loadChatMessages('${id}')"
-      class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+      class="relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
         active ? 'bg-amber-500 text-white' : 'bg-gray-200 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-neutral-600'
-      }">${escapeHtml(label)}</button>`;
+      }">${escapeHtml(label)}${badge}</button>`;
   };
   const dmTabs = TEAM_MEMBERS
     .filter(name => name !== currentChatUser)
