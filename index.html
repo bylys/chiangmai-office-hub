@@ -519,7 +519,10 @@
 
         <!-- TEAMS & BENEFICIARIES (Team GMB, Team SEO, Pierre, Team Ad) -->
         <div>
-          <div class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 px-2 py-1 tracking-wider uppercase" data-i18n="teams_section">Teams & Beneficiaries</div>
+          <button onclick="toggleSidebarSection('teamFilterList', this)" class="w-full flex items-center justify-between px-2 py-1 group cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800/50 rounded transition">
+            <span class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 tracking-wider uppercase" data-i18n="teams_section">Teams & Beneficiaries</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 text-gray-400 dark:text-neutral-500 transition-transform sidebar-chevron"></i>
+          </button>
           <div class="space-y-0.5 text-xs" id="teamFilterList">
             <!-- Dynamically populated -->
           </div>
@@ -527,7 +530,10 @@
 
         <!-- TEAM MEMBERS (Pierre, Jérémy, Matthieu, Marvin, Alexandre, Mailys, Kibo) -->
         <div>
-          <div class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 px-2 py-1 tracking-wider uppercase" data-i18n="members_section">Team Members</div>
+          <button onclick="toggleSidebarSection('memberFilterList', this)" class="w-full flex items-center justify-between px-2 py-1 group cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800/50 rounded transition">
+            <span class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 tracking-wider uppercase" data-i18n="members_section">Team Members</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 text-gray-400 dark:text-neutral-500 transition-transform sidebar-chevron"></i>
+          </button>
           <div class="space-y-0.5 text-xs" id="memberFilterList">
             <!-- Dynamically populated -->
           </div>
@@ -535,7 +541,10 @@
 
         <!-- Office Rooms / Pieces -->
         <div>
-          <div class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 px-2 py-1 tracking-wider uppercase" data-i18n="rooms_section">Office Rooms / Pieces</div>
+          <button onclick="toggleSidebarSection('roomFilterList', this)" class="w-full flex items-center justify-between px-2 py-1 group cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800/50 rounded transition">
+            <span class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500 tracking-wider uppercase" data-i18n="rooms_section">Office Rooms / Pieces</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 text-gray-400 dark:text-neutral-500 transition-transform sidebar-chevron"></i>
+          </button>
           <div class="space-y-0.5 text-xs" id="roomFilterList">
             <!-- Dynamically populated -->
           </div>
@@ -2619,6 +2628,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=1"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

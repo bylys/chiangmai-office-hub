@@ -1433,6 +1433,32 @@ function t(key) {
   return translations[currentLang][key] || key;
 }
 
+function toggleSidebarSection(listId, btn) {
+  const list = document.getElementById(listId);
+  const chevron = btn.querySelector('.sidebar-chevron');
+  if (list.style.display === 'none') {
+    list.style.display = '';
+    chevron.style.transform = '';
+    localStorage.setItem('sb_' + listId, 'open');
+  } else {
+    list.style.display = 'none';
+    chevron.style.transform = 'rotate(-90deg)';
+    localStorage.setItem('sb_' + listId, 'closed');
+  }
+}
+
+function restoreSidebarSections() {
+  ['teamFilterList', 'memberFilterList', 'roomFilterList'].forEach(id => {
+    if (localStorage.getItem('sb_' + id) === 'closed') {
+      const list = document.getElementById(id);
+      if (list) list.style.display = 'none';
+      const btn = list?.previousElementSibling;
+      const chevron = btn?.querySelector('.sidebar-chevron');
+      if (chevron) chevron.style.transform = 'rotate(-90deg)';
+    }
+  });
+}
+
 const roomKeyMap = {
   'Exterieur': 'room_exterieur',
   'Private office': 'room_private',
@@ -1568,6 +1594,7 @@ function renderSidebarFilters() {
       </button>
     `).join('');
   }
+  restoreSidebarSections();
 }
 
 function renderBadges() {
@@ -1930,7 +1957,7 @@ function renderKanbanCard(task) {
   const totalCheck = task.checklist ? task.checklist.length : 0;
   const completedCheck = task.checklist ? task.checklist.filter(c => c.done).length : 0;
   const hasPhone = task.contactPhone && task.contactPhone.trim().length > 0;
-  const isOverdue = task.dueDate && task.status !== 'Done' && new Date(task.dueDate) < new Date();
+  const isOverdue = task.dueDate && task.status !== 'done' && new Date(task.dueDate) < new Date();
 
   return `
     <div draggable="true" ondragstart="handleDragStart(event, '${task.id}')" ondragend="handleDragEnd(event)" onclick="openTaskModal('${task.id}')" class="notion-card bg-white dark:bg-[#252525] rounded-xl p-3 border border-gray-200/80 dark:border-neutral-700/80 shadow-sm hover:shadow hover:border-amber-400 dark:hover:border-amber-600 transition-all cursor-pointer group space-y-2 select-none">
@@ -1996,7 +2023,7 @@ function renderTable() {
 
   tbody.innerHTML = filtered.map((task, index) => {
     const prio = priorities[task.priority] || priorities.medium;
-    const isOverdue = task.dueDate && task.status !== 'Done' && new Date(task.dueDate) < new Date();
+    const isOverdue = task.dueDate && task.status !== 'done' && new Date(task.dueDate) < new Date();
     return `
       <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800/50 cursor-pointer transition text-xs" onclick="openTaskModal('${task.id}')">
         <td class="py-2.5 px-4 text-center font-mono text-gray-400 text-[11px]">${index + 1}</td>
