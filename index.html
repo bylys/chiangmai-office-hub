@@ -42,6 +42,8 @@
   <style>
     /* Role-based visibility: viewers see overview only */
     body.role-viewer [data-admin-only] { display: none !important; }
+    body.role-viewer [data-budget-access] { display: none !important; }
+    body.budget-allowed [data-budget-access] { display: block !important; }
     body.role-viewer .notion-card { pointer-events: auto; }
     /* Custom Notion-like scrollbar */
     ::-webkit-scrollbar {
@@ -192,11 +194,15 @@
       '5daf6c5bc62bb50685a1a2405ae3d605610eb6c4f4cd53d64e7a5d66b75eb0f2': 'Kibo',
     };
     const ADMINS = ['Mailys', 'Kibo'];
+    const BUDGET_ACCESS = ['Pierre', 'Mailys', 'Kibo'];
     window._CM_USERS = USERS;
     window._CM_ADMINS = ADMINS;
+    window._CM_BUDGET_ACCESS = BUDGET_ACCESS;
     function applyRole(userName) {
       if (!ADMINS.includes(userName)) document.body.classList.add('role-viewer');
       else document.body.classList.remove('role-viewer');
+      if (BUDGET_ACCESS.includes(userName)) document.body.classList.add('budget-allowed');
+      else document.body.classList.remove('budget-allowed');
     }
     if (sessionStorage.getItem('cm_auth') === 'ok' && sessionStorage.getItem('cm_user')) {
       document.getElementById('loginGate').style.display = 'none';
@@ -478,7 +484,18 @@
               </div>
             </div>
 
-            <!-- Group: Finance & Bills -->
+            <!-- Budget by Team (visible to Pierre, Kibo, Mailys) -->
+            <div class="mb-2" data-budget-access>
+              <button data-view="budget" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
+                <div class="flex items-center space-x-2.5">
+                  <i data-lucide="pie-chart" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+                  <span data-i18n="view_budget">Budget by Team</span>
+                </div>
+                <span id="badgeBudgetTotal" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono font-bold">฿0</span>
+              </button>
+            </div>
+
+            <!-- Group: Finance & Bills (admin only) -->
             <div class="mb-2" data-admin-only>
               <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90')"
                 class="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-neutral-300">
@@ -486,15 +503,6 @@
                 <i data-lucide="chevron-right" class="w-3 h-3 chevron rotate-90 transition-transform"></i>
               </button>
               <div class="space-y-0.5">
-                <!-- Team Budget Breakdown -->
-                <button data-view="budget" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
-                  <div class="flex items-center space-x-2.5">
-                    <i data-lucide="pie-chart" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
-                    <span data-i18n="view_budget">Budget by Team</span>
-                  </div>
-                  <span id="badgeBudgetTotal" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono font-bold">฿0</span>
-                </button>
-
                 <!-- Recurring Overhead Bills -->
                 <button data-view="recurring_bills" class="view-nav-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium text-gray-600 dark:text-neutral-300 hover:bg-gray-200/50 dark:hover:bg-neutral-800 transition">
                   <div class="flex items-center space-x-2.5">
@@ -2822,6 +2830,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=9"></script>
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

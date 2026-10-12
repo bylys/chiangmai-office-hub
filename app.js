@@ -1820,7 +1820,13 @@ function getFilteredTasks() {
 }
 
 // --- 13. VIEW NAVIGATION ---
+function canAccessBudget() {
+  const allowed = window._CM_BUDGET_ACCESS || ['Pierre', 'Mailys', 'Kibo'];
+  return allowed.includes(sessionStorage.getItem('cm_user'));
+}
+
 function switchView(viewName) {
+  if (viewName === 'budget' && !canAccessBudget()) return;
   activeView = viewName;
   document.querySelectorAll('.view-nav-btn').forEach(btn => {
     const bv = btn.getAttribute('data-view');
