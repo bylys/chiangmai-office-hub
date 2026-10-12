@@ -1447,6 +1447,24 @@ function toggleSidebarSection(listId, btn) {
   }
 }
 
+function showUserBadge() {
+  const user = sessionStorage.getItem('cm_user');
+  const badge = document.getElementById('userBadge');
+  const name = document.getElementById('userBadgeName');
+  if (user && badge && name) {
+    name.textContent = user;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+    if (typeof setChatUser === 'function') setChatUser(user);
+  }
+}
+
+function logoutUser() {
+  sessionStorage.removeItem('cm_auth');
+  sessionStorage.removeItem('cm_user');
+  location.reload();
+}
+
 function restoreSidebarSections() {
   ['teamFilterList', 'memberFilterList', 'roomFilterList'].forEach(id => {
     if (localStorage.getItem('sb_' + id) === 'closed') {
@@ -1826,6 +1844,13 @@ function switchView(viewName) {
   if (viewName === 'wiki') document.getElementById('viewWiki').classList.remove('hidden');
   if (viewName === 'tutorial') document.getElementById('viewTutorial').classList.remove('hidden');
 
+  const vc = document.getElementById('viewContainer');
+  if (viewName === 'kanban') {
+    vc.style.overflowY = 'hidden';
+  } else {
+    vc.style.overflowY = 'auto';
+  }
+
   renderCurrentView();
   lucide.createIcons();
 }
@@ -1933,7 +1958,7 @@ function renderKanban() {
           </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1 kanban-scroll-col">
           ${colTasks.map(task => renderKanbanCard(task)).join('')}
           ${colTasks.length === 0 ? `
             <div class="text-center py-6 border border-dashed border-gray-200 dark:border-neutral-800 rounded-lg text-gray-400 text-xs">
@@ -1949,6 +1974,15 @@ function renderKanban() {
       </div>
     `;
   }).join('');
+
+  container.querySelectorAll('.kanban-scroll-col').forEach(col => {
+    col.addEventListener('wheel', (e) => {
+      const atTop = col.scrollTop === 0;
+      const atBottom = col.scrollTop + col.clientHeight >= col.scrollHeight - 1;
+      if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) return;
+      e.stopPropagation();
+    }, { passive: true });
+  });
 }
 
 function renderKanbanCard(task) {
@@ -4006,12 +4040,13 @@ async function renderExchangeWidget() {
 // --- 25. INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
-  await initData();
+  try { await initData(); } catch(e) { console.warn('initData error:', e); initDataFromLocalStorage(); }
   setLanguage(currentLang);
   renderExchangeWidget();
 
   if (typeof setupRealtime === 'function') setupRealtime();
   if (typeof initChat === 'function') initChat();
+  showUserBadge();
 
   document.querySelectorAll('.view-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {

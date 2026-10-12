@@ -154,7 +154,7 @@
       <form id="loginForm" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password / รหัสผ่าน</label>
-          <input id="loginPassword" type="password" placeholder="Enter your password"
+          <input id="loginPassword" type="password" placeholder="Enter your personal password"
             class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition" autofocus>
         </div>
         <div id="loginError" class="text-red-500 text-sm hidden">Incorrect password / รหัสผ่านไม่ถูกต้อง</div>
@@ -162,13 +162,22 @@
           Log in / เข้าสู่ระบบ
         </button>
       </form>
-      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">Access restricted to authorized staff only</p>
+      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">Each team member has their own password</p>
     </div>
   </div>
   <script>
   (function(){
-    const HASH = '5daf6c5bc62bb50685a1a2405ae3d605610eb6c4f4cd53d64e7a5d66b75eb0f2';
-    if (sessionStorage.getItem('cm_auth') === 'ok') {
+    const USERS = {
+      '03c5ea04fba9367955472728139c011da9523785d05eec25accbacb5d91b55e1': 'Pierre',
+      'fe9ae4f7bf5a1d973e9f5aba6ee3a9d4013e95fc4977e6068f510db0a6739b7b': 'Jérémy',
+      'fc4c00e0130ca7785b6e11fd2e207bc38410683a6da60a326b3daec2cc2b6504': 'Matthieu',
+      '1516ff2aaf15a57d3970997cfcf6383535038d79bd47fea233a39c5dffe6b331': 'Marvin',
+      'dae7e4cfb46214be80d1a3aac7e902f1bf1a1e14940465f8980446e00000e6dc': 'Alexandre',
+      '618c6f4764eee7322b10c3ce8e0dcc506385c998356718f3b2abcdf524192d45': 'Mailys',
+      '5daf6c5bc62bb50685a1a2405ae3d605610eb6c4f4cd53d64e7a5d66b75eb0f2': 'Kibo',
+    };
+    window._CM_USERS = USERS;
+    if (sessionStorage.getItem('cm_auth') === 'ok' && sessionStorage.getItem('cm_user')) {
       document.getElementById('loginGate').style.display = 'none';
     }
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -179,9 +188,13 @@
       const hashBuffer = await crypto.subtle.digest('SHA-256', data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      if (hashHex === HASH) {
+      const userName = USERS[hashHex];
+      if (userName) {
         sessionStorage.setItem('cm_auth', 'ok');
+        sessionStorage.setItem('cm_user', userName);
+        localStorage.setItem('cm_chat_user', userName);
         document.getElementById('loginGate').style.display = 'none';
+        if (typeof showUserBadge === 'function') showUserBadge();
       } else {
         document.getElementById('loginError').classList.remove('hidden');
         document.getElementById('loginPassword').value = '';
@@ -314,6 +327,15 @@
         <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
         <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
       </button>
+
+      <!-- Logged-in User Badge -->
+      <div id="userBadge" class="hidden items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 cursor-default" title="Logged in as">
+        <i data-lucide="user" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"></i>
+        <span id="userBadgeName" class="text-xs font-semibold text-amber-800 dark:text-amber-200"></span>
+        <button onclick="logoutUser()" class="ml-1 p-0.5 rounded hover:bg-amber-200 dark:hover:bg-amber-900 transition" title="Logout">
+          <i data-lucide="log-out" class="w-3 h-3 text-amber-600 dark:text-amber-400"></i>
+        </button>
+      </div>
 
       <!-- New Item Dropdown Button -->
       <div class="relative group">
@@ -682,10 +704,10 @@
       </div>
 
       <!-- Views Container (Scrollable) -->
-      <div class="flex-1 overflow-y-auto p-6" id="viewContainer">
+      <div class="flex-1 overflow-y-hidden p-6" id="viewContainer">
 
         <!-- VIEW 1: KANBAN BOARD -->
-        <div id="viewKanban" class="h-full flex space-x-4 overflow-x-auto pb-4"></div>
+        <div id="viewKanban" class="flex space-x-4 overflow-x-auto pb-4" style="height: calc(100vh - 220px);"></div>
 
         <!-- VIEW 2: TABLE VIEW -->
         <div id="viewTable" class="hidden">
@@ -2628,6 +2650,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=1"></script>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
