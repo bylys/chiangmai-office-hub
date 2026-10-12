@@ -1337,28 +1337,30 @@ function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function initData() {
+function initDataFromLocalStorage() {
   const sTasks = localStorage.getItem('cm_office_tasks_v4');
   tasks = sTasks ? JSON.parse(sTasks) : [...defaultCMTasks];
-
   const sSupplies = localStorage.getItem('cm_office_supplies_v4');
   supplies = sSupplies ? JSON.parse(sSupplies) : [...defaultCMSupplies];
-
   const sHw = localStorage.getItem('cm_office_handworkers_v4');
   handworkers = sHw ? JSON.parse(sHw) : [...defaultCMHandworkers];
-
   const sAppt = localStorage.getItem('cm_office_appointments_v4');
   appointments = sAppt ? JSON.parse(sAppt) : [...defaultCMAppointments];
-
   const sReno = localStorage.getItem('cm_office_renovations_v4');
   renovations = sReno ? JSON.parse(sReno) : [...defaultCMRenovations];
-
   const sAssets = localStorage.getItem('cm_office_assets_v1');
   assets = sAssets ? JSON.parse(sAssets) : [...defaultCMAssets];
-
   const sBills = localStorage.getItem('cm_office_bills_v1');
   recurringBills = sBills ? JSON.parse(sBills) : [...defaultCMRecurringBills];
+}
 
+async function initData() {
+  if (typeof loadAllFromSupabase === 'function') {
+    const loaded = await loadAllFromSupabase();
+    if (!loaded) initDataFromLocalStorage();
+  } else {
+    initDataFromLocalStorage();
+  }
   saveAllStorage();
 }
 
@@ -1370,6 +1372,7 @@ function saveAllStorage() {
   localStorage.setItem('cm_office_renovations_v4', JSON.stringify(renovations));
   localStorage.setItem('cm_office_assets_v1', JSON.stringify(assets));
   localStorage.setItem('cm_office_bills_v1', JSON.stringify(recurringBills));
+  if (typeof scheduleSyncToSupabase === 'function') scheduleSyncToSupabase();
   renderBadges();
   renderNotifications();
 }
@@ -3974,11 +3977,14 @@ async function renderExchangeWidget() {
 }
 
 // --- 25. INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
-  initData();
+  await initData();
   setLanguage(currentLang);
   renderExchangeWidget();
+
+  if (typeof setupRealtime === 'function') setupRealtime();
+  if (typeof initChat === 'function') initChat();
 
   document.querySelectorAll('.view-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
