@@ -1453,6 +1453,8 @@ function showUserBadge() {
   const name = document.getElementById('userBadgeName');
   if (user && badge && name) {
     name.textContent = user;
+    const roleTag = document.getElementById('userBadgeRole');
+    if (roleTag) roleTag.textContent = isAdmin() ? 'Admin' : 'Viewer';
     badge.classList.remove('hidden');
     badge.classList.add('flex');
     if (typeof setChatUser === 'function') setChatUser(user);
@@ -1463,6 +1465,11 @@ function logoutUser() {
   sessionStorage.removeItem('cm_auth');
   sessionStorage.removeItem('cm_user');
   location.reload();
+}
+
+function isAdmin() {
+  const admins = window._CM_ADMINS || ['Mailys', 'Kibo'];
+  return admins.includes(sessionStorage.getItem('cm_user'));
 }
 
 function restoreSidebarSections() {
@@ -1953,9 +1960,9 @@ function renderKanban() {
               ${colTasks.length}
             </span>
           </div>
-          <button onclick="openTaskModal(null, '${status.id}')" title="Add Card" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-200/60 dark:hover:bg-neutral-700 transition">
+          ${isAdmin() ? `<button onclick="openTaskModal(null, '${status.id}')" title="Add Card" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-200/60 dark:hover:bg-neutral-700 transition">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          </button>
+          </button>` : ''}
         </div>
 
         <div class="flex-1 overflow-y-auto space-y-2 pr-1 kanban-scroll-col">
@@ -1967,10 +1974,10 @@ function renderKanban() {
           ` : ''}
         </div>
 
-        <button onclick="openTaskModal(null, '${status.id}')" class="mt-2 text-left w-full px-2.5 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-200/60 dark:hover:bg-neutral-800/80 hover:text-gray-800 dark:hover:text-gray-200 flex items-center space-x-1.5 transition">
+        ${isAdmin() ? `<button onclick="openTaskModal(null, '${status.id}')" class="mt-2 text-left w-full px-2.5 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-200/60 dark:hover:bg-neutral-800/80 hover:text-gray-800 dark:hover:text-gray-200 flex items-center space-x-1.5 transition">
           <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           <span>${t('add_card')}</span>
-        </button>
+        </button>` : ''}
       </div>
     `;
   }).join('');
@@ -1994,7 +2001,7 @@ function renderKanbanCard(task) {
   const isOverdue = task.dueDate && task.status !== 'done' && new Date(task.dueDate) < new Date();
 
   return `
-    <div draggable="true" ondragstart="handleDragStart(event, '${task.id}')" ondragend="handleDragEnd(event)" onclick="openTaskModal('${task.id}')" class="notion-card bg-white dark:bg-[#252525] rounded-xl p-3 border border-gray-200/80 dark:border-neutral-700/80 shadow-sm hover:shadow hover:border-amber-400 dark:hover:border-amber-600 transition-all cursor-pointer group space-y-2 select-none">
+    <div draggable="${isAdmin()}" ${isAdmin() ? `ondragstart="handleDragStart(event, '${task.id}')" ondragend="handleDragEnd(event)"` : ''} onclick="openTaskModal('${task.id}')" class="notion-card bg-white dark:bg-[#252525] rounded-xl p-3 border border-gray-200/80 dark:border-neutral-700/80 shadow-sm hover:shadow hover:border-amber-400 dark:hover:border-amber-600 transition-all cursor-pointer group space-y-2 select-none">
 
       <!-- Top Pills: Team & Priority -->
       <div class="flex items-center justify-between gap-1">
@@ -2784,7 +2791,12 @@ function openTaskModal(taskId = null, defaultStatus = 'todo') {
   }
 
   modal.classList.remove('hidden');
-  document.getElementById('modalTitleInput').focus();
+  if (!isAdmin()) {
+    modal.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; el.style.opacity = '0.7'; });
+  } else {
+    modal.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = false; el.style.opacity = ''; });
+    document.getElementById('modalTitleInput').focus();
+  }
   lucide.createIcons();
 }
 
