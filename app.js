@@ -1965,7 +1965,7 @@ function renderKanban() {
           </button>` : ''}
         </div>
 
-        <div class="flex-1 overflow-y-auto space-y-2 pr-1 kanban-scroll-col">
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1 kanban-scroll-col" style="overscroll-behavior:contain">
           ${colTasks.map(task => renderKanbanCard(task)).join('')}
           ${colTasks.length === 0 ? `
             <div class="text-center py-6 border border-dashed border-gray-200 dark:border-neutral-800 rounded-lg text-gray-400 text-xs">
@@ -1982,13 +1982,21 @@ function renderKanban() {
     `;
   }).join('');
 
+  let scrollTimer;
   container.querySelectorAll('.kanban-scroll-col').forEach(col => {
     col.addEventListener('wheel', (e) => {
+      if (col.scrollHeight <= col.clientHeight) return;
       const atTop = col.scrollTop === 0;
       const atBottom = col.scrollTop + col.clientHeight >= col.scrollHeight - 1;
       if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) return;
       e.stopPropagation();
-    }, { passive: true });
+      e.preventDefault();
+    }, { passive: false });
+    col.addEventListener('scroll', () => {
+      col.style.pointerEvents = 'none';
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => { col.style.pointerEvents = ''; }, 150);
+    });
   });
 }
 
