@@ -189,25 +189,28 @@ let unreadCount = 0;
 
 const TEAM_MEMBERS = ['Pierre', 'Jérémy', 'Matthieu', 'Marvin', 'Alexandre', 'Mailys', 'Kibo'];
 
+function normalizeName(name) {
+  return name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function getDmChannelId(personA, personB) {
+  const sorted = [normalizeName(personA), normalizeName(personB)].sort();
+  return 'dm-' + sorted[0] + '-' + sorted[1];
+}
+
 async function initChat() {
   try {
     const { data, error } = await sb.from('channels').select('*');
     if (error) throw error;
-    chatChannels = (data || []).map(ch => ({
-      ...ch,
-      type: ch.id.startsWith('dm-') ? 'dm' : 'group'
-    }));
+    chatChannels = (data || []).filter(ch => !ch.id.startsWith('dm-'));
   } catch (e) {
     console.warn('[Chat] Channels not available yet, using defaults');
     chatChannels = [
-      { id: 'general', name: 'General', name_th: 'ทั่วไป', type: 'group' },
-      { id: 'team-gmb', name: 'Team GMB', name_th: 'ทีม GMB', type: 'group' },
-      { id: 'team-seo', name: 'Team SEO', name_th: 'ทีม SEO', type: 'group' },
-      { id: 'team-ad', name: 'Team Ad', name_th: 'ทีม Ad', type: 'group' },
-    ].concat(TEAM_MEMBERS.map(name => ({
-      id: 'dm-' + name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''),
-      name: name, name_th: name, type: 'dm'
-    })));
+      { id: 'general', name: 'General', name_th: 'ทั่วไป' },
+      { id: 'team-gmb', name: 'Team GMB', name_th: 'ทีม GMB' },
+      { id: 'team-seo', name: 'Team SEO', name_th: 'ทีม SEO' },
+      { id: 'team-ad', name: 'Team Ad', name_th: 'ทีม Ad' },
+    ];
   }
   if (currentChatUser) {
     await loadChatMessages(currentChannel);
@@ -323,16 +326,16 @@ function renderChat() {
     return;
   }
 
-  const groupChannels = chatChannels.filter(ch => ch.type !== 'dm');
-  const dmChannels = chatChannels.filter(ch => ch.type === 'dm');
-  const makeTab = (ch) => {
-    const active = ch.id === currentChannel;
-    const label = currentLang === 'th' && ch.name_th ? ch.name_th : ch.name;
-    return `<button onclick="loadChatMessages('${ch.id}')"
+  const makeTab = (id, label) => {
+    const active = id === currentChannel;
+    return `<button onclick="loadChatMessages('${id}')"
       class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
         active ? 'bg-amber-500 text-white' : 'bg-gray-200 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-neutral-600'
       }">${escapeHtml(label)}</button>`;
   };
+  const dmTabs = TEAM_MEMBERS
+    .filter(name => name !== currentChatUser)
+    .map(name => makeTab(getDmChannelId(currentChatUser, name), name));
   const header = `
     <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800">
       <div class="flex items-center space-x-2">
@@ -343,12 +346,15 @@ function renderChat() {
     </div>
     <div class="px-3 py-2 border-b border-gray-200 dark:border-neutral-700 space-y-1.5">
       <div class="flex space-x-1.5 overflow-x-auto">
-        ${groupChannels.map(makeTab).join('')}
+        ${chatChannels.map(ch => {
+          const label = currentLang === 'th' && ch.name_th ? ch.name_th : ch.name;
+          return makeTab(ch.id, label);
+        }).join('')}
       </div>
-      ${dmChannels.length ? `<div class="flex space-x-1 overflow-x-auto">
+      <div class="flex space-x-1 overflow-x-auto">
         <span class="text-[9px] text-gray-400 dark:text-neutral-500 self-center pr-1 shrink-0">DM</span>
-        ${dmChannels.map(makeTab).join('')}
-      </div>` : ''}
+        ${dmTabs.join('')}
+      </div>
     </div>
   `;
 
