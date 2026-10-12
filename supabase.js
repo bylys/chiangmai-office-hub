@@ -188,6 +188,23 @@ let chatOpen = false;
 let unreadCount = 0;
 let unreadPerChannel = {};
 
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.25);
+  } catch (e) {}
+}
+
 const TEAM_MEMBERS = ['Pierre', 'Jérémy', 'Matthieu', 'Marvin', 'Alexandre', 'Mailys', 'Kibo'];
 
 function normalizeName(name) {
@@ -267,6 +284,7 @@ function handleNewChatMessage(msg) {
     scrollChatToBottom();
   }
   if (msg.sender !== currentChatUser) {
+    playNotificationSound();
     if (!chatOpen || msg.channel !== currentChannel) {
       unreadCount++;
       unreadPerChannel[msg.channel] = (unreadPerChannel[msg.channel] || 0) + 1;
