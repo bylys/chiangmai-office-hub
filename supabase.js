@@ -306,6 +306,12 @@ function renderChat() {
   const panel = document.getElementById('chatPanel');
   if (!panel) return;
 
+  const loggedInUser = sessionStorage.getItem('cm_user');
+  if (loggedInUser && loggedInUser !== currentChatUser) {
+    currentChatUser = loggedInUser;
+    localStorage.setItem('cm_chat_user', loggedInUser);
+  }
+
   if (!currentChatUser) {
     renderUserPicker();
     return;
@@ -326,12 +332,7 @@ function renderChat() {
         <span class="text-sm font-bold text-gray-900 dark:text-white">💬 Chat</span>
         <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 font-medium">${escapeHtml(currentChatUser)}</span>
       </div>
-      <div class="flex items-center space-x-1">
-        <button onclick="renderUserPicker()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1" title="Switch user">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-        </button>
-        <button onclick="toggleChat()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1">✕</button>
-      </div>
+      <button onclick="toggleChat()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1">✕</button>
     </div>
     <div class="flex space-x-1.5 px-3 py-2 overflow-x-auto border-b border-gray-200 dark:border-neutral-700">
       ${channelTabs}
