@@ -346,9 +346,9 @@ function renderChat() {
   const makeTab = (id, label) => {
     const active = id === currentChannel;
     const count = unreadPerChannel[id] || 0;
-    const badge = `<span data-channel-badge="${id}" class="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none ${count ? '' : 'hidden'}">${count > 9 ? '9+' : count}</span>`;
+    const badge = count ? `<span data-channel-badge="${id}" class="ml-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none">${count > 9 ? '9+' : count}</span>` : `<span data-channel-badge="${id}" class="hidden ml-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none"></span>`;
     return `<button onclick="loadChatMessages('${id}')"
-      class="relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+      class="flex items-center px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
         active ? 'bg-amber-500 text-white' : 'bg-gray-200 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-neutral-600'
       }">${escapeHtml(label)}${badge}</button>`;
   };
