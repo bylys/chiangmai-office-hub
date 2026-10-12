@@ -1990,14 +1990,6 @@ function renderKanban() {
 
   let scrollTimer;
   container.querySelectorAll('.kanban-scroll-col').forEach(col => {
-    col.addEventListener('wheel', (e) => {
-      if (col.scrollHeight <= col.clientHeight) return;
-      const atTop = col.scrollTop === 0;
-      const atBottom = col.scrollTop + col.clientHeight >= col.scrollHeight - 1;
-      if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) return;
-      e.stopPropagation();
-      e.preventDefault();
-    }, { passive: false });
     col.addEventListener('scroll', () => {
       col.style.pointerEvents = 'none';
       clearTimeout(scrollTimer);
