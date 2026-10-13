@@ -1456,7 +1456,7 @@ function showUserBadge() {
   if (user && badge && name) {
     name.textContent = user;
     const roleTag = document.getElementById('userBadgeRole');
-    if (roleTag) roleTag.textContent = isAdmin() ? 'Admin' : 'Viewer';
+    if (roleTag) roleTag.textContent = isAdmin() ? 'Admin' : canEditTasks() ? 'Editor' : 'Viewer';
     badge.classList.remove('hidden');
     badge.classList.add('flex');
     if (typeof setChatUser === 'function') setChatUser(user);
@@ -1825,6 +1825,11 @@ function canAccessBudget() {
   return allowed.includes(sessionStorage.getItem('cm_user'));
 }
 
+function canEditTasks() {
+  const allowed = window._CM_TASK_EDITORS || ['Pierre', 'Mailys', 'Kibo'];
+  return allowed.includes(sessionStorage.getItem('cm_user'));
+}
+
 function switchView(viewName) {
   if (viewName === 'budget' && !canAccessBudget()) return;
   activeView = viewName;
@@ -1972,7 +1977,7 @@ function renderKanban() {
               ${colTasks.length}
             </span>
           </div>
-          ${isAdmin() ? `<button onclick="openTaskModal(null, '${status.id}')" title="Add Card" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-200/60 dark:hover:bg-neutral-700 transition">
+          ${canEditTasks() ? `<button onclick="openTaskModal(null, '${status.id}')" title="Add Card" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-200/60 dark:hover:bg-neutral-700 transition">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           </button>` : ''}
         </div>
@@ -1986,7 +1991,7 @@ function renderKanban() {
           ` : ''}
         </div>
 
-        ${isAdmin() ? `<button onclick="openTaskModal(null, '${status.id}')" class="mt-2 text-left w-full px-2.5 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-200/60 dark:hover:bg-neutral-800/80 hover:text-gray-800 dark:hover:text-gray-200 flex items-center space-x-1.5 transition">
+        ${canEditTasks() ? `<button onclick="openTaskModal(null, '${status.id}')" class="mt-2 text-left w-full px-2.5 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-200/60 dark:hover:bg-neutral-800/80 hover:text-gray-800 dark:hover:text-gray-200 flex items-center space-x-1.5 transition">
           <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           <span>${t('add_card')}</span>
         </button>` : ''}
@@ -2013,7 +2018,7 @@ function renderKanbanCard(task) {
   const isOverdue = task.dueDate && task.status !== 'done' && new Date(task.dueDate) < new Date();
 
   return `
-    <div draggable="${isAdmin()}" ${isAdmin() ? `ondragstart="handleDragStart(event, '${task.id}')" ondragend="handleDragEnd(event)"` : ''} onclick="openTaskModal('${task.id}')" class="notion-card bg-white dark:bg-[#252525] rounded-xl p-3 border border-gray-200/80 dark:border-neutral-700/80 shadow-sm hover:shadow hover:border-amber-400 dark:hover:border-amber-600 transition-all cursor-pointer group space-y-2 select-none">
+    <div draggable="${canEditTasks()}" ${canEditTasks() ? `ondragstart="handleDragStart(event, '${task.id}')" ondragend="handleDragEnd(event)"` : ''} onclick="openTaskModal('${task.id}')" class="notion-card bg-white dark:bg-[#252525] rounded-xl p-3 border border-gray-200/80 dark:border-neutral-700/80 shadow-sm hover:shadow hover:border-amber-400 dark:hover:border-amber-600 transition-all cursor-pointer group space-y-2 select-none">
 
       <!-- Top Pills: Team & Priority -->
       <div class="flex items-center justify-between gap-1">
@@ -2804,7 +2809,7 @@ function openTaskModal(taskId = null, defaultStatus = 'todo') {
 
   modal.classList.remove('hidden');
   const saveBtn = document.getElementById('modalSaveBtn');
-  if (!isAdmin()) {
+  if (!canEditTasks()) {
     modal.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; el.style.opacity = '0.7'; });
     const prioSelect = document.getElementById('modalPrioritySelect');
     prioSelect.disabled = false;
@@ -2897,7 +2902,7 @@ function addChecklistItem() {
 }
 
 function saveCurrentTask() {
-  if (!isAdmin() && editingTaskId) {
+  if (!canEditTasks() && editingTaskId) {
     const idx = tasks.findIndex(t => t.id === editingTaskId);
     if (idx !== -1) {
       tasks[idx].priority = document.getElementById('modalPrioritySelect').value;

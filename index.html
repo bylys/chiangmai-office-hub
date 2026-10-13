@@ -44,6 +44,8 @@
     body.role-viewer [data-admin-only] { display: none !important; }
     body.role-viewer [data-budget-access] { display: none !important; }
     body.budget-allowed [data-budget-access] { display: block !important; }
+    body.role-viewer [data-task-editor] { display: none !important; }
+    body.task-editor [data-task-editor] { display: flex !important; }
     body.role-viewer .notion-card { pointer-events: auto; }
     /* Custom Notion-like scrollbar */
     ::-webkit-scrollbar {
@@ -195,14 +197,18 @@
     };
     const ADMINS = ['Mailys', 'Kibo'];
     const BUDGET_ACCESS = ['Pierre', 'Mailys', 'Kibo'];
+    const TASK_EDITORS = ['Pierre', 'Mailys', 'Kibo'];
     window._CM_USERS = USERS;
     window._CM_ADMINS = ADMINS;
     window._CM_BUDGET_ACCESS = BUDGET_ACCESS;
+    window._CM_TASK_EDITORS = TASK_EDITORS;
     function applyRole(userName) {
       if (!ADMINS.includes(userName)) document.body.classList.add('role-viewer');
       else document.body.classList.remove('role-viewer');
       if (BUDGET_ACCESS.includes(userName)) document.body.classList.add('budget-allowed');
       else document.body.classList.remove('budget-allowed');
+      if (TASK_EDITORS.includes(userName)) document.body.classList.add('task-editor');
+      else document.body.classList.remove('task-editor');
     }
     if (sessionStorage.getItem('cm_auth') === 'ok' && sessionStorage.getItem('cm_user')) {
       document.getElementById('loginGate').style.display = 'none';
@@ -234,7 +240,7 @@
   </script>
 
   <!-- Top App Navigation Bar -->
-  <header class="h-14 border-b border-gray-200 dark:border-neutral-800 bg-white/80 dark:bg-[#1f1f1f]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4">
+  <header class="h-14 border-b border-gray-200 dark:border-neutral-800 bg-white/80 dark:bg-[#1f1f1f]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4 overflow-hidden">
     <div class="flex items-center space-x-3">
       <button id="toggleSidebarBtn" class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-500 dark:text-neutral-400">
         <i data-lucide="menu" class="w-5 h-5"></i>
@@ -247,8 +253,8 @@
     </div>
 
     <!-- Center Quick Search Bar -->
-    <div class="hidden md:flex items-center">
-      <div class="relative w-80">
+    <div class="hidden lg:flex items-center min-w-0 flex-1 max-w-sm mx-4">
+      <div class="relative w-full">
         <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5"></i>
         <input 
           id="globalSearchInput" 
@@ -262,7 +268,7 @@
     </div>
 
     <!-- Right Controls: Notifications, Language, Dark Mode, New Item -->
-    <div class="flex items-center space-x-2">
+    <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
       
       <!-- NOTIFICATIONS BELL & REMINDERS DROPDOWN -->
       <div class="relative">
@@ -368,7 +374,7 @@
       </div>
 
       <!-- New Item Dropdown Button -->
-      <div class="relative group" data-admin-only>
+      <div class="relative group" data-task-editor>
         <button id="quickNewTaskBtn" class="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
           <i data-lucide="plus" class="w-4 h-4"></i>
           <span data-i18n="new_task" class="hidden sm:inline">New Item</span>
@@ -2830,6 +2836,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=9"></script>
-  <script src="app.js?v=14"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>
