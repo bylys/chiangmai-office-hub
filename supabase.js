@@ -18,7 +18,7 @@ function objToSnake(obj) {
   const r = {};
   for (const [k, v] of Object.entries(obj)) {
     if (k === 'createdAt' || k === 'updatedAt') continue;
-    r[camelToSnake(k)] = v;
+    r[camelToSnake(k)] = (v === '') ? null : v;
   }
   return r;
 }
@@ -113,6 +113,7 @@ function scheduleSyncToSupabase() {
 }
 
 async function doSyncAll() {
+  syncTimeout = null;
   localSyncCooldownUntil = Date.now() + 3000;
   for (const cfg of TABLE_CONFIG) {
     await syncOneTable(cfg.name, cfg.getLocal());
@@ -133,7 +134,8 @@ async function syncOneTable(tableName, localData) {
     }
 
     if (snakeData.length > 0) {
-      await sb.from(tableName).upsert(snakeData, { onConflict: 'id' });
+      const { error } = await sb.from(tableName).upsert(snakeData, { onConflict: 'id' });
+      if (error) console.error(`[Supabase] Upsert ${tableName} failed:`, error);
     }
   } catch (err) {
     console.error(`[Supabase] Sync ${tableName} failed:`, err);
