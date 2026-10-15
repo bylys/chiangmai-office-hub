@@ -1956,6 +1956,12 @@ function renderKanban() {
   const container = document.getElementById('viewKanban');
   const filtered = getFilteredTasks();
 
+  const scrollPositions = {};
+  container.querySelectorAll('.kanban-scroll-col').forEach((col, i) => {
+    if (col.scrollTop > 0) scrollPositions[i] = col.scrollTop;
+  });
+  const containerScrollLeft = container.scrollLeft;
+
   const statuses = [
     { id: 'todo', nameEn: 'To Do', nameTh: 'ยังไม่เริ่ม', dot: 'bg-gray-400' },
     { id: 'in_progress', nameEn: 'In Progress', nameTh: 'กำลังดำเนินการ', dot: 'bg-blue-500' },
@@ -2000,13 +2006,15 @@ function renderKanban() {
   }).join('');
 
   let scrollTimer;
-  container.querySelectorAll('.kanban-scroll-col').forEach(col => {
+  container.querySelectorAll('.kanban-scroll-col').forEach((col, i) => {
+    if (scrollPositions[i]) col.scrollTop = scrollPositions[i];
     col.addEventListener('scroll', () => {
       col.style.pointerEvents = 'none';
       clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => { col.style.pointerEvents = ''; }, 150);
     });
   });
+  if (containerScrollLeft > 0) container.scrollLeft = containerScrollLeft;
 }
 
 function renderKanbanCard(task) {
@@ -4699,3 +4707,80 @@ document.addEventListener('click', function(e) {
     w.classList.add('hidden');
   }
 });
+
+// =====================================================================
+// ANIMATIONS: scroll reveal, header compaction, magnetic buttons
+// =====================================================================
+
+(function initAnimations() {
+
+  // --- Scroll reveal via IntersectionObserver ---
+  function setupScrollReveal() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+  }
+
+  // --- Header compaction on scroll ---
+  function setupHeaderCompact() {
+    const header = document.querySelector('header');
+    const main = document.querySelector('main');
+    if (!header || !main) return;
+
+    let lastScroll = 0;
+    main.addEventListener('scroll', () => {
+      const y = main.scrollTop || 0;
+      if (y > 60 && !header.classList.contains('header-compact')) {
+        header.classList.add('header-compact');
+      } else if (y <= 30 && header.classList.contains('header-compact')) {
+        header.classList.remove('header-compact');
+      }
+      lastScroll = y;
+    }, { passive: true });
+
+    const vc = document.getElementById('viewContainer');
+    if (vc) {
+      vc.addEventListener('scroll', () => {
+        const y = vc.scrollTop || 0;
+        if (y > 60) header.classList.add('header-compact');
+        else if (y <= 30) header.classList.remove('header-compact');
+      }, { passive: true });
+    }
+  }
+
+  // --- Magnetic button hover ---
+  function setupMagneticButtons() {
+    document.querySelectorAll('.btn-magnetic').forEach(btn => {
+      btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) * 0.25;
+        const dy = (e.clientY - cy) * 0.25;
+        btn.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = '';
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setupScrollReveal();
+      setupHeaderCompact();
+      setupMagneticButtons();
+    });
+  } else {
+    setupScrollReveal();
+    setupHeaderCompact();
+    setupMagneticButtons();
+  }
+})();

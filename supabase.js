@@ -104,6 +104,8 @@ async function seedDefaultsToSupabase() {
 }
 
 // --- Sync local changes to Supabase (debounced) ---
+let localSyncCooldownUntil = 0;
+
 function scheduleSyncToSupabase() {
   if (!supabaseReady || isRemoteUpdate) return;
   clearTimeout(syncTimeout);
@@ -111,9 +113,11 @@ function scheduleSyncToSupabase() {
 }
 
 async function doSyncAll() {
+  localSyncCooldownUntil = Date.now() + 3000;
   for (const cfg of TABLE_CONFIG) {
     await syncOneTable(cfg.name, cfg.getLocal());
   }
+  localSyncCooldownUntil = Date.now() + 2000;
 }
 
 async function syncOneTable(tableName, localData) {
@@ -158,6 +162,7 @@ function setupRealtime() {
 }
 
 async function handleRemoteTableChange(cfg) {
+  if (Date.now() < localSyncCooldownUntil) return;
   try {
     const { data } = await sb.from(cfg.name).select('*');
     if (!data) return;
