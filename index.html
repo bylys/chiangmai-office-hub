@@ -62,6 +62,9 @@
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(150, 150, 150, 0.5);
     }
+    /* Scrollable header toolbar on narrow screens */
+    .header-scroll::-webkit-scrollbar { display: none; }
+    .header-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     .notion-card:hover .hover-action {
       opacity: 1;
     }
@@ -291,8 +294,8 @@
   </script>
 
   <!-- Top App Navigation Bar -->
-  <header class="h-14 border-b border-gray-200 dark:border-neutral-800 bg-white/80 dark:bg-[#1f1f1f]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4">
-    <div class="flex items-center space-x-3">
+  <header class="h-14 border-b border-gray-200 dark:border-neutral-800 bg-white/80 dark:bg-[#1f1f1f]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4 overflow-x-auto header-scroll">
+    <div class="flex items-center space-x-3 flex-shrink-0">
       <button id="toggleSidebarBtn" class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-500 dark:text-neutral-400">
         <i data-lucide="menu" class="w-5 h-5"></i>
       </button>
@@ -319,7 +322,7 @@
     </div>
 
     <!-- Right Controls: Notifications, Language, Dark Mode, New Item -->
-    <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+    <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0 flex-nowrap">
       
       <!-- NOTIFICATIONS BELL & REMINDERS DROPDOWN -->
       <div class="relative">
@@ -354,7 +357,7 @@
       </div>
 
       <!-- Calculator Widget -->
-      <div class="relative hidden sm:block">
+      <div class="relative flex-shrink-0">
         <button id="calcToggleBtn" onclick="toggleCalcWidget()" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition" title="Calculator / เครื่องคิดเลข">
           <i data-lucide="calculator" class="w-4 h-4"></i>
         </button>
@@ -397,7 +400,7 @@
       </div>
 
       <!-- Language Switcher Toggle -->
-      <div class="hidden sm:flex items-center bg-gray-100 dark:bg-neutral-800 p-0.5 rounded-lg border border-gray-200 dark:border-neutral-700 text-xs">
+      <div class="flex items-center bg-gray-100 dark:bg-neutral-800 p-0.5 rounded-lg border border-gray-200 dark:border-neutral-700 text-xs flex-shrink-0">
         <button id="langENBtn" class="px-2.5 py-1 rounded-md font-medium transition-all flex items-center space-x-1.5 bg-white dark:bg-neutral-700 shadow-sm text-gray-900 dark:text-white">
           <span>🇬🇧</span>
           <span>EN</span>
@@ -426,10 +429,10 @@
 
       <!-- New Item Dropdown Button -->
       <div class="relative group" data-task-editor>
-        <button id="quickNewTaskBtn" class="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition">
+        <button id="quickNewTaskBtn" class="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 shadow-sm transition flex-shrink-0 whitespace-nowrap">
           <i data-lucide="plus" class="w-4 h-4"></i>
-          <span data-i18n="new_task" class="hidden sm:inline">New Item</span>
-          <i data-lucide="chevron-down" class="w-3 h-3 ml-0.5 hidden sm:inline"></i>
+          <span data-i18n="new_task">New Item</span>
+          <i data-lucide="chevron-down" class="w-3 h-3 ml-0.5"></i>
         </button>
         <!-- Dropdown menu -->
         <div class="absolute top-full right-0 mt-1 w-52 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-xl py-1 text-xs hidden group-hover:block z-40">
