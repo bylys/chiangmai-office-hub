@@ -62,9 +62,6 @@
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(150, 150, 150, 0.5);
     }
-    /* Scrollable header toolbar on narrow screens */
-    .header-scroll::-webkit-scrollbar { display: none; }
-    .header-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     .notion-card:hover .hover-action {
       opacity: 1;
     }
@@ -214,7 +211,7 @@
     .dark .calc-eq { background: #d97706; }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-[#191919] text-[#37352f] dark:text-[#ebebeb] h-full flex flex-col font-sans antialiased selection:bg-amber-100 dark:selection:bg-amber-900">
+<body class="bg-gray-50 dark:bg-[#191919] text-[#37352f] dark:text-[#ebebeb] h-full flex flex-col font-sans antialiased selection:bg-amber-100 dark:selection:bg-amber-900" style="min-width:640px">
 
   <!-- Login Gate -->
   <div id="loginGate" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;z-index:99999;background:#111" class="bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900">
@@ -294,7 +291,7 @@
   </script>
 
   <!-- Top App Navigation Bar -->
-  <header class="h-14 border-b border-gray-200 dark:border-neutral-800 bg-white/80 dark:bg-[#1f1f1f]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4 overflow-x-auto header-scroll">
+  <header class="h-14 border-b border-gray-200 dark:border-neutral-800 bg-white/80 dark:bg-[#1f1f1f]/80 backdrop-blur sticky top-0 z-30 flex items-center justify-between px-4">
     <div class="flex items-center space-x-3 flex-shrink-0">
       <button id="toggleSidebarBtn" class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-500 dark:text-neutral-400">
         <i data-lucide="menu" class="w-5 h-5"></i>
